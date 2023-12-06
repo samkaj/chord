@@ -3,31 +3,22 @@ package main
 import (
 	"chord/chord"
 	"flag"
-	"fmt"
-	"log"
-	"time"
 )
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	fmt.Println("welcome to chord from wish")
-	join := flag.String("j", "", "join address")
-  addr := flag.String("a", "", "chord address")
+	a := flag.String("a", "", "the chord address")
+	j := flag.String("j", "", "the join address")
+  tcp := flag.Int("tcp", 0, "check predecessor interval")
+  ts := flag.Int("ts", 0, "stabilize interval")
+  tff := flag.Int("ff", 0, "fix fingers interval")
 	flag.Parse()
-
-	node := new(chord.Node)
-	node.CheckPredecessorInterval = 1000
-  node.StabilizeInterval = 2000
-	node.Address = *addr
-	if *join != "" {
-		log.Println("joining a ring")
-		node.JoinRing(*join)
-	} else {
-		log.Println("creating a new ring")
-		node.CreateRing()
-	}
-
-	for {
-		time.Sleep(time.Second)
+	node := chord.Node{}
+	node.CreateNode(*a)
+  node.CheckPredecessorInterval = *tcp
+  node.StabilizeInterval = *ts
+  node.FixFingersInterval = *tff
+  node.ID = chord.Hash(*a)
+	if *j != "" {
+		node.Join(*j)
 	}
 }
