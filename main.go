@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	fmt.Println("welcome to chord from wish")
 	join := flag.String("j", "", "join address")
   addr := flag.String("a", "", "chord address")
