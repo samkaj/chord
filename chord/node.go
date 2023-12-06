@@ -1,7 +1,6 @@
 package chord
 
 import (
-	"crypto/sha1"
 	"fmt"
 	"log"
 	"math/big"
@@ -11,36 +10,31 @@ import (
 	"time"
 )
 
-func hash(addr string) *big.Int {
-	h := sha1.New()
-	h.Write([]byte(addr))
-	return new(big.Int).SetBytes(h.Sum(nil))
-}
+const r int = 3
+const maxRequests int = 32
 
 type Node struct {
 	ID                       *big.Int
 	Address                  string
-	Successor                []*Node
-	Predecessor              string
+	Successor                []string
+	Predecessor              *Node
 	StabilizeInterval        int
 	FixFingersInterval       int
 	CheckPredecessorInterval int
 }
 
 func (n *Node) CreateRing() {
-	n.Predecessor = ""
-	n.Successor = []*Node{n} // FIXME: should call find successor on the dest node
+	n.Predecessor = nil
+	n.Successor = []string{n.Address} // FIXME: should call find successor on the dest node
+	n.ID = hash(n.Address)
 	n.Start()
 }
 
 // Joins a ring and sets the destination to the successor of the node.
 func (n *Node) JoinRing(dest string) {
-	successor := &Node{
-		ID:      hash(dest),
-		Address: dest,
-	}
-	n.Predecessor = ""
-	n.Successor = []*Node{successor} // FIXME: should call find successor on the dest node
+	n.Predecessor = nil
+	n.Successor = []string{dest} // FIXME: should call find successor on the dest node
+	n.ID = hash(n.Address)
 	n.Start()
 }
 
@@ -51,43 +45,65 @@ func (n *Node) StartIntervals() {
 	go callOnInverval(n.FixFingersInterval, n.FixFingers)
 }
 
-// FIXME: no ops for now
+// Call the successor and get its successor list and predecessor.
 func (n *Node) Stabilize() {
-	if len(n.Successor) > 0 {
-		x := n.Successor[0]
-    if x.Address == n.Address {
-      return
-    }
-		err := call("Node.Notify", x.Address, &NotifyArgs{Node: *n}, &Empty{})
-		if err != nil {
-			log.Printf("failed to notify node: %v\n", err)
+	log.Println("successors: ", len(n.Successor))
+	// Don't call yourself
+	if len(n.Successor) < 1 {
+		n.Successor = []string{n.Address}
+	}
+
+	if n.Successor[0] == n.Address {
+		return
+	}
+
+	alive := &PingReply{}
+	err := call("Node.Ping", n.Successor[0], Empty{}, alive)
+	if err != nil {
+		log.Println(err)
+		if len(n.Successor) > 0 {
+			n.Successor = n.Successor[1:]
 		}
 	}
+
+	reply := &NotifyReply{}
+	if len(n.Successor) == 0 {
+		n.Successor = []string{n.Address}
+		return
+	}
+	err = call("Node.Notify", n.Successor[0], &NotifyArgs{Node: *n}, reply)
+	successors := []string{n.Successor[0]}
+	successors = append(successors, reply.Successors...)
+	n.Successor = successors
+}
+
+func (n *Node) Notify(args *NotifyArgs, reply *NotifyReply) error {
+	if equals(n.ID, args.Node.ID) {
+		return nil
+	}
+	if n.Predecessor == nil /*|| (len(n.Successor) > 0 && between(n.Predecessor.ID, args.Node.ID, n.Successor[0].ID, false) )*/ {
+		n.Predecessor = &args.Node
+	}
+	reply.Predecessor = *n.Predecessor
+	reply.Successors = n.Successor
+	return nil
 }
 
 func (n *Node) FixFingers() {}
 func (n *Node) CheckPredecessor() {
-	if n.Predecessor != "" {
-		log.Println("check predecessor")
+	if n.Predecessor != nil {
+		fmt.Println("check predecessor")
 		reply := &PingReply{}
-		err := call("Node.Ping", n.Predecessor, Empty{}, reply)
+		err := call("Node.Ping", n.Predecessor.Address, Empty{}, reply)
 		if !reply.Alive || err != nil {
-			n.Predecessor = ""
+			n.Predecessor = nil
 		}
 	}
 }
 
 func (n *Node) Ping(args *Empty, reply *PingReply) error {
-	log.Println("ping")
+	fmt.Println("ping")
 	reply.Alive = true
-	return nil
-}
-
-func (n *Node) Notify(args *NotifyArgs, reply *Empty) error {
-	// TODO: check from our predecessor to the node in args
-	if n.Predecessor == "" {
-		n.Predecessor = args.Node.Address
-	}
 	return nil
 }
 
@@ -113,9 +129,8 @@ func (n *Node) LaunchRPC() {
 		log.Fatalf("Failed to listen: %v", err)
 		return
 	}
-  
 
-	log.Println("Starting RPC server on ", n.Address)
+	fmt.Println("Starting RPC server on ", n.Address)
 	go http.Serve(listener, nil)
 }
 
@@ -143,6 +158,8 @@ type PingReply struct {
 }
 
 type NotifyReply struct {
+	Predecessor Node
+	Successors  []string
 }
 
 type NotifyArgs struct {
