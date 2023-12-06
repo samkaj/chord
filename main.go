@@ -16,6 +16,7 @@ func main() {
 
 	node := new(chord.Node)
 	node.CheckPredecessorInterval = 1000
+  node.StabilizeInterval = 2000
 	node.Address = *addr
 	if *join != "" {
 		log.Println("joining a ring")
