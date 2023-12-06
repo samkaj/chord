@@ -8,16 +8,30 @@ import (
 	"net/rpc"
 )
 
-func (node *Node) ServeAndListen() {
-  rpc.Register(node)
-  rpc.HandleHTTP()
-  listener, err := net.Listen("tcp", node.Address)
-  if err != nil {
-    log.Fatalf("Failed to listen: %v", err)
-  }
+type Empty struct {}
 
-  fmt.Printf("Listening on %s\n", node.Address)
-  err = http.Serve(listener, nil)
+type FindPredecessorArgs struct {
+  Key string
+}
+
+type FindSuccessorArgs struct {
+  Successor *Node
+}
+
+type FindSuccessorReply struct {
+	Successor *Node
+}
+
+func (node *Node) ServeAndListen() {
+	rpc.Register(node)
+	rpc.HandleHTTP()
+	listener, err := net.Listen("tcp", node.Address)
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
+	}
+
+	fmt.Printf("Listening on %s\n", node.Address)
+	err = http.Serve(listener, nil)
 }
 
 func call(method string, address string, args any, reply any) error {
