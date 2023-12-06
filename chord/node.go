@@ -25,16 +25,19 @@ type Node struct {
 
 func (n *Node) CreateRing() {
 	n.Predecessor = nil
-	n.Successor = []string{n.Address} // FIXME: should call find successor on the dest node
 	n.ID = hash(n.Address)
+	n.Successor = []string{}
 	n.Start()
 }
 
 // Joins a ring and sets the destination to the successor of the node.
 func (n *Node) JoinRing(dest string) {
 	n.Predecessor = nil
-	n.Successor = []string{dest} // FIXME: should call find successor on the dest node
+
 	n.ID = hash(n.Address)
+	//reply := &FindReply{}
+	//call("Node.Find", dest, &FindArgs{ID: n.ID.String(), Start: dest}, reply)
+	n.Successor = []string{dest}
 	n.Start()
 }
 
@@ -48,30 +51,27 @@ func (n *Node) StartIntervals() {
 // Call the successor and get its successor list and predecessor.
 func (n *Node) Stabilize() {
 	log.Println("successors: ", len(n.Successor))
-	// Don't call yourself
-	if len(n.Successor) < 1 {
+	log.Println("predecessor: ", n.Predecessor)
+	if len(n.Successor) == 0 {
 		n.Successor = []string{n.Address}
 	}
 
-	if n.Successor[0] == n.Address {
-		return
-	}
-
-	alive := &PingReply{}
-	err := call("Node.Ping", n.Successor[0], Empty{}, alive)
-	if err != nil {
-		log.Println(err)
-		if len(n.Successor) > 0 {
-			n.Successor = n.Successor[1:]
+	if n.Successor[0] != n.Address {
+		alive := &PingReply{}
+		err := call("Node.Ping", n.Successor[0], Empty{}, alive)
+		if err != nil {
+			log.Println(err)
+			if len(n.Successor) > 0 {
+				n.Successor = n.Successor[1:]
+			}
 		}
 	}
 
 	reply := &NotifyReply{}
-	if len(n.Successor) == 0 {
-		n.Successor = []string{n.Address}
-		return
+	err := call("Node.Notify", n.Successor[0], &NotifyArgs{Node: *n}, reply)
+	if err != nil {
+		fmt.Println(err)
 	}
-	err = call("Node.Notify", n.Successor[0], &NotifyArgs{Node: *n}, reply)
 	successors := []string{n.Successor[0]}
 	successors = append(successors, reply.Successors...)
 	n.Successor = successors
@@ -81,10 +81,10 @@ func (n *Node) Notify(args *NotifyArgs, reply *NotifyReply) error {
 	if equals(n.ID, args.Node.ID) {
 		return nil
 	}
-	if n.Predecessor == nil /*|| (len(n.Successor) > 0 && between(n.Predecessor.ID, args.Node.ID, n.Successor[0].ID, false) )*/ {
+	if n.Predecessor == nil || (len(n.Successor) > 0 && between(n.Predecessor.ID, args.Node.ID, hash(n.Successor[0]), false)) {
 		n.Predecessor = &args.Node
 	}
-	reply.Predecessor = *n.Predecessor
+	fmt.Println("notify")
 	reply.Successors = n.Successor
 	return nil
 }
@@ -92,7 +92,6 @@ func (n *Node) Notify(args *NotifyArgs, reply *NotifyReply) error {
 func (n *Node) FixFingers() {}
 func (n *Node) CheckPredecessor() {
 	if n.Predecessor != nil {
-		fmt.Println("check predecessor")
 		reply := &PingReply{}
 		err := call("Node.Ping", n.Predecessor.Address, Empty{}, reply)
 		if !reply.Alive || err != nil {
@@ -101,8 +100,38 @@ func (n *Node) CheckPredecessor() {
 	}
 }
 
+func (n *Node) ClosestPreceedingNode(id string) string {
+	// TODO: use id param with finger table
+	if len(n.Successor) > 0 {
+		return n.Successor[0]
+	}
+	return ""
+}
+
+func (n *Node) Find(args *FindArgs, reply *FindReply) error {
+	next := args.Start
+	found := false
+	i := 0
+	for !found || i < maxRequests {
+		found, next = n.FindSuccessor(args.ID)
+		i++
+	}
+	if found {
+		reply.ID = next
+		return nil
+	}
+
+	return fmt.Errorf("could not find successor")
+}
+
+func (n *Node) FindSuccessor(id string) (bool, string) {
+	if between(n.ID, toBigInt(id), toBigInt(n.Successor[0]), true) {
+		return true, n.Successor[0]
+	}
+	return false, n.Successor[0]
+}
+
 func (n *Node) Ping(args *Empty, reply *PingReply) error {
-	fmt.Println("ping")
 	reply.Alive = true
 	return nil
 }
@@ -164,6 +193,16 @@ type NotifyReply struct {
 
 type NotifyArgs struct {
 	Node Node
+}
+
+type FindArgs struct {
+	ID    string
+	Start string
+}
+
+type FindReply struct {
+	Found bool
+	ID    string
 }
 
 // -------------------- RPC end ----------------------

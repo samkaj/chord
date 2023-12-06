@@ -38,3 +38,7 @@ func jump(address string, fingerentry int) *big.Int {
 func equals(a, b*big.Int) bool {
   return a.Cmp(b) == 0
 }
+
+func toBigInt(s string) *big.Int {
+  return new(big.Int).SetBytes([]byte(s))
+}
