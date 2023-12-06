@@ -1,4 +1,4 @@
-Go build -o build/chord
+go build -o build/chord
 if [ $# -eq 1 ] 
 then
   build/chord -a $1
