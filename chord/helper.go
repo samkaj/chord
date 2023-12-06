@@ -39,6 +39,6 @@ func equals(a, b*big.Int) bool {
   return a.Cmp(b) == 0
 }
 
-func toBigInt(s string) *big.Int {
+func ToBigInt(s string) *big.Int {
   return new(big.Int).SetBytes([]byte(s))
 }

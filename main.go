@@ -3,6 +3,8 @@ package main
 import (
 	"chord/chord"
 	"flag"
+	"log"
+	"time"
 )
 
 func main() {
@@ -13,12 +15,21 @@ func main() {
   tff := flag.Int("ff", 0, "fix fingers interval")
 	flag.Parse()
 	node := chord.Node{}
-	node.CreateNode(*a)
   node.CheckPredecessorInterval = *tcp
   node.StabilizeInterval = *ts
   node.FixFingersInterval = *tff
-  node.ID = chord.Hash(*a)
+  node.ID = chord.Hash(*a).String()
+  log.Println("addr",*a)
+  node.CreateNode(*a)
+  if *j == "" {
+    node.Start()
+  }
 	if *j != "" {
 		node.Join(*j)
 	}
+
+
+  for {
+    time.Sleep(time.Second)
+  }
 }
