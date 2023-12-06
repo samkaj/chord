@@ -31,10 +31,14 @@ func (node *Node) CreateNode(address string) {
 }
 
 func (node *Node) Start() {
+  node.StartIntervals()
+	node.ServeAndListen()
+}
+
+func (node *Node) StartIntervals () {
 	callOnInterval(node.StabilizeInterval, node.Stabilize)
 	callOnInterval(node.FixFingersInterval, node.FixFingers)
 	callOnInterval(node.CheckPredecessorInterval, node.CheckPredecessor)
-	node.ServeAndListen()
 }
 
 // Join an existing ring
