@@ -38,6 +38,10 @@ type ClosestPrecedingNodeReply struct {
   Node string
 }
 
+type PingReply struct {
+    Alive bool
+}
+
 func (node *Node) ServeAndListen() {
 	rpc.Register(node)
 	rpc.HandleHTTP()

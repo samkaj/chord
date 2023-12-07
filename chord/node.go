@@ -1,7 +1,6 @@
 package chord
 
 import (
-	"fmt"
 	"log"
 	"time"
 )
@@ -62,9 +61,6 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 		reply.Successor = node.Address
 		return nil
 	}
-
-	log.Printf("FindSuccessor: %s\n", args.CallingNode.Address)
-	log.Printf("Address: %s\n", node.Address)
 
 	if between(ToBigInt(node.ID), ToBigInt(args.CallingNode.ID), Hash(node.Successor), true) {
 		reply.Successor = node.Successor
@@ -136,6 +132,11 @@ func (node *Node) Stabilize() {
 	}
 }
 
+func (node *Node) Ping(args *Empty, reply *PingReply) error {
+	reply.Alive = true
+	return nil
+}
+
 // Fix the finger table of a given node
 func (node *Node) FixFingers() {
 	// TODO
@@ -143,8 +144,11 @@ func (node *Node) FixFingers() {
 
 // Check the predecessor of a given node
 func (node *Node) CheckPredecessor() {
-	// TODO
-	fmt.Println(node.Predecessor)
+	reply := new(PingReply)
+	err := call("Node.Ping", node.Predecessor, &Empty{}, reply)
+	if err != nil || !reply.Alive {
+		node.Predecessor = null
+	}
 }
 
 func (node *Node) GetPredecessor(args *Empty, reply *FindSuccessorReply) error {
