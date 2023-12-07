@@ -15,7 +15,11 @@ type FindSuccessorArgs struct {
 }
 
 type FindSuccessorReply struct {
-	Successor *Node
+	Successor string
+}
+
+type GetPredecessorReply struct {
+    Predecessor string
 }
 
 type NotifyArgs struct {
@@ -31,7 +35,7 @@ type ClosestPrecedingNodeArgs struct {
 }
 
 type ClosestPrecedingNodeReply struct {
-  Node *Node
+  Node string
 }
 
 func (node *Node) ServeAndListen() {
