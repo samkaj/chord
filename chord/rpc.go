@@ -18,7 +18,13 @@ type FindSuccessorReply struct {
 	Successor []string
 }
 
+type GetSuccessorReply struct {
+  Successor []string
+}
+
+
 type GetPredecessorReply struct {
+  Successor []string
 	Predecessor string
 }
 
