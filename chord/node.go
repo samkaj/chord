@@ -10,7 +10,7 @@ const null = ""
 type Node struct {
 	ID                       string
 	Address                  string
-	Successor                string
+	Successor                []string
 	Predecessor              string
 	FingerTable              []string
 	Data                     map[string]string
@@ -22,7 +22,7 @@ type Node struct {
 // Create a new node with the given address
 func (node *Node) CreateNode(address string) {
 	node.Address = address
-	node.Successor = address
+	node.Successor = []string{address}
 	node.Predecessor = null
 	node.FingerTable = make([]string, 0)
 	node.Data = make(map[string]string)
@@ -58,11 +58,11 @@ func (node *Node) Join(address string) {
 func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorReply) error {
 	// Prevent infinite loops
 	if args.CallingNode.Address == node.Address {
-		reply.Successor = node.Address
+		reply.Successor = node.Successor
 		return nil
 	}
 
-	if between(ToBigInt(node.ID), ToBigInt(args.CallingNode.ID), Hash(node.Successor), true) {
+	if between(ToBigInt(node.ID), ToBigInt(args.CallingNode.ID), Hash(node.Successor[0]), true) {
 		reply.Successor = node.Successor
 	} else {
 		closestPrecedingNodeArgs := new(ClosestPrecedingNodeArgs)
@@ -72,7 +72,7 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 		if err != nil {
 			log.Fatal(err)
 		}
-		reply.Successor = closestPrecedingNodeReply.Node
+		reply.Successor = []string{closestPrecedingNodeReply.Node}
 	}
 	return nil
 }
@@ -112,22 +112,23 @@ func (node *Node) UpdatePredecessor() {
 
 // Stabilize the ring
 func (node *Node) Stabilize() {
-	if node.Successor == node.ID {
+	if node.Successor[0] == node.ID {
 		return
 	}
 
 	x := new(GetPredecessorReply)
-	call("Node.GetPredecessor", node.Successor, &Empty{}, x)
+	call("Node.GetPredecessor", node.Successor[0], &Empty{}, x)
 
-	if x.Predecessor != null && between(Hash(x.Predecessor), ToBigInt(node.ID), Hash(node.Successor), false) {
-		node.Successor = x.Predecessor
+	if x.Predecessor != null && between(Hash(x.Predecessor), ToBigInt(node.ID), Hash(node.Successor[0]), false) {
+		// node.Successor = x.Predecessor
+    node.Successor = append(node.Successor, x.Predecessor)
 	}
 
 	notifyArgs := new(NotifyArgs)
 	notifyArgs.CallingNode = node
 	notifyReply := new(NotifyReply)
   log.Println(node.Successor)
-	err := call("Node.Notify", node.Successor, notifyArgs, notifyReply)
+	err := call("Node.Notify", node.Successor[0], notifyArgs, notifyReply)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -152,8 +153,8 @@ func (node *Node) CheckPredecessor() {
 	}
 }
 
-func (node *Node) GetPredecessor(args *Empty, reply *FindSuccessorReply) error {
-	reply.Successor = node.Predecessor
+func (node *Node) GetPredecessor(args *Empty, reply *GetPredecessorReply) error {
+	reply.Predecessor = node.Predecessor
 	return nil
 }
 

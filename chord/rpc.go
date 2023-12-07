@@ -15,7 +15,7 @@ type FindSuccessorArgs struct {
 }
 
 type FindSuccessorReply struct {
-	Successor string
+	Successor []string
 }
 
 type GetPredecessorReply struct {
