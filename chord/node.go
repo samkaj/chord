@@ -119,13 +119,14 @@ func (node *Node) Stabilize() {
 	x := new(GetPredecessorReply)
 	call("Node.GetPredecessor", node.Successor, &Empty{}, x)
 
-	if x != nil && between(Hash(x.Predecessor), ToBigInt(node.ID), Hash(node.Successor), false) {
+	if x.Predecessor != null && between(Hash(x.Predecessor), ToBigInt(node.ID), Hash(node.Successor), false) {
 		node.Successor = x.Predecessor
 	}
 
 	notifyArgs := new(NotifyArgs)
 	notifyArgs.CallingNode = node
 	notifyReply := new(NotifyReply)
+  log.Println(node.Successor)
 	err := call("Node.Notify", node.Successor, notifyArgs, notifyReply)
 	if err != nil {
 		log.Fatal(err)

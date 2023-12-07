@@ -8,10 +8,10 @@ import (
 	"net/rpc"
 )
 
-type Empty struct {}
+type Empty struct{}
 
 type FindSuccessorArgs struct {
-  CallingNode *Node
+	CallingNode *Node
 }
 
 type FindSuccessorReply struct {
@@ -19,27 +19,27 @@ type FindSuccessorReply struct {
 }
 
 type GetPredecessorReply struct {
-    Predecessor string
+	Predecessor string
 }
 
 type NotifyArgs struct {
-  CallingNode *Node
+	CallingNode *Node
 }
 
 type NotifyReply struct {
-  Success bool
+	Success bool
 }
 
 type ClosestPrecedingNodeArgs struct {
-  CallingNode *Node
+	CallingNode *Node
 }
 
 type ClosestPrecedingNodeReply struct {
-  Node string
+	Node string
 }
 
 type PingReply struct {
-    Alive bool
+	Alive bool
 }
 
 func (node *Node) ServeAndListen() {
