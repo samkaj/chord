@@ -58,7 +58,8 @@ func (node *Node) Join(address string) {
 // Find the successor of a given key
 func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorReply) error {
 	// Prevent infinite loops
-	if args.CallingNode.ID == node.ID {
+	if args.CallingNode.Address == node.Address {
+		reply.Successor = node.Address
 		return nil
 	}
 
@@ -75,10 +76,6 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = call("Node.FindSuccessor", closestPrecedingNodeReply.Node, args, reply)
-		if err != nil {
-			log.Fatal(err)
-		}
 		reply.Successor = closestPrecedingNodeReply.Node
 	}
 	return nil
@@ -86,8 +83,8 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 
 // Notify a node that it may be its predecessor
 func (node *Node) Notify(args *NotifyArgs, reply *Empty) error {
-	if node.Predecessor == "" || between(Hash(node.Predecessor), ToBigInt(args.CallingNode.ID), ToBigInt(node.ID), false) {
-		node.Predecessor = args.CallingNode.ID
+	if node.Address != args.CallingNode.Address && (node.Predecessor == "" || between(Hash(node.Predecessor), ToBigInt(args.CallingNode.ID), ToBigInt(node.ID), false)) {
+		node.Predecessor = args.CallingNode.Address
 	}
 	return nil
 }
