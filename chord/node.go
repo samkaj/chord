@@ -62,8 +62,6 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 		return nil
 	}
 
-	log.Printf("FindSuccessor: %s\n", args.CallingNode.Address)
-	log.Printf("Address: %s\n", node.Address)
 
 	if between(ToBigInt(node.ID), ToBigInt(args.CallingNode.ID), Hash(node.Successor), true) {
 		reply.Successor = node.Successor
@@ -87,7 +85,7 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 // Notify a node that it may be its predecessor
 func (node *Node) Notify(args *NotifyArgs, reply *Empty) error {
 	if node.Predecessor == "" || between(Hash(node.Predecessor), ToBigInt(args.CallingNode.ID), ToBigInt(node.ID), false) {
-		node.Predecessor = args.CallingNode.ID
+		node.Predecessor = args.CallingNode.Address
 	}
 	return nil
 }
@@ -119,18 +117,18 @@ func (node *Node) UpdatePredecessor() {
 
 // Stabilize the ring
 func (node *Node) Stabilize() {
-	if node.Successor == node.ID {
-		return
+	if node.Successor == node.Address{
+	      return
 	}
 
 	x := new(GetPredecessorReply)
 	call("Node.GetPredecessor", node.Successor, &Empty{}, x)
-
-	if x != nil && between(Hash(x.Predecessor), ToBigInt(node.ID), Hash(node.Successor), false) {
+  fmt.Println("GetPredecessorReply: ", x)
+	if x.Predecessor != "" && between(Hash(x.Predecessor), ToBigInt(node.ID), Hash(node.Successor), false) {
 		node.Successor = x.Predecessor
 	}
-
-	notifyArgs := new(NotifyArgs)
+	
+  notifyArgs := new(NotifyArgs)
 	notifyArgs.CallingNode = node
 	notifyReply := new(NotifyReply)
 	err := call("Node.Notify", node.Successor, notifyArgs, notifyReply)
@@ -147,7 +145,12 @@ func (node *Node) FixFingers() {
 // Check the predecessor of a given node
 func (node *Node) CheckPredecessor() {
 	// TODO
-	fmt.Println(node.Predecessor)
+  fmt.Println("--------Node--------")
+  fmt.Println("ID: ", node.ID)
+  fmt.Println("Adress: ", node.Address)
+  fmt.Println("Successor: ", node.Successor)
+  fmt.Println("Predecessor: ", node.Predecessor)
+  fmt.Println("--------------------")
 }
 
 func (node *Node) GetPredecessor(args *Empty, reply *FindSuccessorReply) error {

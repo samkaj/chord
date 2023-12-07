@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"time"
+  "fmt"
 )
 
 func main() {
@@ -22,9 +23,11 @@ func main() {
   log.Println("addr",*a)
   node.CreateNode(*a)
   if *j == "" {
+    fmt.Println("Starting new chord ring asd")
     node.Start()
   }
 	if *j != "" {
+    fmt.Println("Joining chord ring")
 		node.Join(*j)
 	}
 
