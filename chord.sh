@@ -57,3 +57,5 @@ command+=" -tcp \"$inputTCP\" -ts \"$inputTS\" -ff \"$inputFF\""
 
 # Run the chord command with the provided arguments
 eval $command
+
+rm build/chord
