@@ -41,7 +41,7 @@ func (node *Node) StartIntervals() {
 
 // Join an existing ring
 func (node *Node) Join(address string) {
-  node.Successor = []string{node.Address}
+	node.Successor = []string{node.Address}
 	args := new(FindSuccessorArgs)
 	args.CallingNode = node
 	reply := new(FindSuccessorReply)
@@ -50,9 +50,9 @@ func (node *Node) Join(address string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-  successors := reply.Successor
-  successors = append(successors, node.Successor...)
-  node.Successor = successors
+	successors := reply.Successor
+	successors = append(successors, node.Successor...)
+	node.Successor = successors
 	log.Printf("Successor: %s\n", node.Successor)
 	node.Start()
 }
@@ -75,20 +75,20 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 		if err != nil {
 			log.Fatal(err)
 		}
-    // Use get successor to get the successor of the closest preceding node
-    getSuccessorReply := new(FindSuccessorReply)
-    err = call("Node.GetSuccessor", closestPrecedingNodeReply.Node, &Empty{}, getSuccessorReply)
-    if err != nil {
-      log.Fatal(err)
-    }
-    reply.Successor = getSuccessorReply.Successor
+		// Use get successor to get the successor of the closest preceding node
+		getSuccessorReply := new(FindSuccessorReply)
+		err = call("Node.GetSuccessor", closestPrecedingNodeReply.Node, &Empty{}, getSuccessorReply)
+		if err != nil {
+			log.Fatal(err)
+		}
+		reply.Successor = getSuccessorReply.Successor
 	}
 	return nil
 }
 
 func (node *Node) GetSuccessor(args *Empty, reply *GetSuccessorReply) error {
-  reply.Successor = node.Successor
-  return nil
+	reply.Successor = node.Successor
+	return nil
 }
 
 // Notify a node that it may be its predecessor
@@ -133,25 +133,25 @@ func (node *Node) Stabilize() {
 	x := new(GetPredecessorReply)
 	call("Node.GetPredecessor", node.Successor[0], &Empty{}, x)
 
-  // print what will be used in between
-  log.Println(Hash(x.Predecessor))
-  log.Println(ToBigInt(node.ID))
-  log.Println(Hash(node.Successor[0]))
+	// print what will be used in between
+	log.Println(Hash(x.Predecessor))
+	log.Println(ToBigInt(node.ID))
+	log.Println(Hash(node.Successor[0]))
 	if x.Predecessor != null && between(Hash(x.Predecessor), ToBigInt(node.ID), Hash(node.Successor[0]), false) {
 		// node.Successor = x.Predecessor
-    successors := []string{node.Successor[0]}
-    successors = append(successors, node.Successor[1:]...)
-    node.Successor = successors
-    log.Println(len(node.Successor))
+		successors := []string{node.Successor[0]}
+		successors = append(successors, node.Successor[1:]...)
+		node.Successor = successors
+		log.Println(len(node.Successor))
 	}
 
 	notifyArgs := new(NotifyArgs)
 	notifyArgs.CallingNode = node
 	notifyReply := new(NotifyReply)
-  log.Println(node.Successor)
+	log.Println(node.Successor)
 	err := call("Node.Notify", node.Successor[0], notifyArgs, notifyReply)
 	if err != nil {
-    node.Successor = node.Successor[1:]
+		node.Successor = node.Successor[1:]
 	}
 }
 
