@@ -3,13 +3,19 @@ package main
 import (
 	"chord/chord"
 	"flag"
-	"fmt"
 	"log"
-	"time"
+	"os"
 )
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
+  logFile := "log.txt"
+  f, err := os.OpenFile(logFile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+  if err != nil {
+    log.Fatalf("error opening file: %v", err)
+  }
+  defer f.Close()
+  log.SetOutput(f)
 	a := flag.String("a", "", "the chord address")
 	j := flag.String("j", "", "the join address")
 	tcp := flag.Int("tcp", 0, "check predecessor interval")
@@ -29,15 +35,12 @@ func main() {
 	log.Println("addr", *a)
 	node.CreateNode(*a)
 	if *j == "" {
-		fmt.Println("Starting new chord ring asd")
-		node.Start()
+		go node.Start()
 	}
 	if *j != "" {
-		fmt.Println("Joining chord ring")
-		node.Join(*j)
+		go node.Join(*j)
 	}
 
-	for {
-		time.Sleep(time.Second)
-	}
+	cli := chord.CLI{Node: &node}
+	cli.ReadCommands(&node)
 }

@@ -1,7 +1,6 @@
 package chord
 
 import (
-	"fmt"
 	"log"
 	"math/big"
 	"time"
@@ -84,7 +83,7 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 // Notify a node that it may be its predecessor
 func (node *Node) Notify(args *NotifyArgs, reply *Empty) error {
 	if node.Predecessor == "" || between(Hash(node.Predecessor), Hash(args.Key), Hash(node.Address), false) {
-		fmt.Printf("Setting predecessor to: %s\n", args.Key)
+		log.Printf("Setting predecessor to: %s\n", args.Key)
 		node.Predecessor = args.Key
 	}
 	return nil
@@ -132,12 +131,12 @@ func (node *Node) Stabilize() {
 	if node.Successors[0] != node.Address {
 		x = new(GetPredecessorReply)
 		call("Node.GetPredecessor", node.Successors[0], &Empty{}, x)
-		fmt.Println("GetPredecessorReply: ", x)
+		log.Println("GetPredecessorReply: ", x)
 	}
 
 	// node ∃ (Predecessor, Successor)
 	if x.Predecessor != "" && between(Hash(node.Address), Hash(x.Predecessor), Hash(node.Successors[0]), false) {
-		fmt.Printf("Setting successor \n")
+		log.Printf("Setting successor \n")
 		node.Successors[0] = x.Predecessor
 	}
 
@@ -178,7 +177,7 @@ func (node *Node) FixFingers() {
 	if node.Next > node.M {
 		node.Next = 1
 	}
-	fmt.Println("Fixing finger: ", node.Next)
+	log.Println("Fixing finger: ", node.Next)
 	succArgs := new(FindSuccessorArgs)
 	succArgs.Key = big.NewInt(2).Exp(big.NewInt(2), big.NewInt(int64(node.Next-1)), nil).String()
 	succReply := new(FindSuccessorReply)
@@ -192,12 +191,12 @@ func (node *Node) FixFingers() {
 // Check the predecessor of a given node
 func (node *Node) CheckPredecessor() {
 	// TODO
-	fmt.Println("--------Node--------")
-	fmt.Println("ID: ", node.ID)
-	fmt.Println("Adress: ", node.Address)
-	fmt.Println("Successors: ", node.Successors)
-	fmt.Println("Predecessor: ", node.Predecessor)
-	fmt.Println("--------------------")
+	log.Println("--------Node--------")
+	log.Println("ID: ", node.ID)
+	log.Println("Adress: ", node.Address)
+	log.Println("Successors: ", node.Successors)
+	log.Println("Predecessor: ", node.Predecessor)
+	log.Println("--------------------")
 	err := call("Node.Ping", node.Predecessor, &Empty{}, &Empty{})
 	if err != nil {
 		node.Predecessor = ""
