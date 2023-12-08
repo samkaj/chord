@@ -38,6 +38,11 @@ type ClosestPrecedingNodeReply struct {
   Node string
 }
 
+type GetSuccessorlistArgs struct {}
+type GetSuccessorlistReply struct{
+	Successors []string
+}
+
 func (node *Node) ServeAndListen() {
 	rpc.Register(node)
 	rpc.HandleHTTP()
