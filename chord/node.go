@@ -61,6 +61,10 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 	if args.CallingNode.ID == node.ID {
 		return nil
 	}
+	if(node.Successor == node.Address){
+		reply.Successor = node.Successor
+		return nil
+	}
 
 
 	if between(ToBigInt(node.ID), ToBigInt(args.CallingNode.ID), Hash(node.Successor), true) {
@@ -85,6 +89,7 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 // Notify a node that it may be its predecessor
 func (node *Node) Notify(args *NotifyArgs, reply *Empty) error {
 	if node.Predecessor == "" || between(Hash(node.Predecessor), ToBigInt(args.CallingNode.ID), ToBigInt(node.ID), false) {
+		fmt.Printf("Setting predecessor to: %s\n", args.CallingNode.Address)
 		node.Predecessor = args.CallingNode.Address
 	}
 	return nil
@@ -117,24 +122,35 @@ func (node *Node) UpdatePredecessor() {
 
 // Stabilize the ring
 func (node *Node) Stabilize() {
-	if node.Successor == node.Address{
-	      return
-	}
-
+	
 	x := new(GetPredecessorReply)
-	call("Node.GetPredecessor", node.Successor, &Empty{}, x)
-  fmt.Println("GetPredecessorReply: ", x)
-	if x.Predecessor != "" && between(Hash(x.Predecessor), ToBigInt(node.ID), Hash(node.Successor), false) {
+	x.Predecessor = node.Predecessor
+	if node.Successor != node.Address{
+		x = new(GetPredecessorReply)
+		call("Node.GetPredecessor", node.Successor, &Empty{}, x)
+		fmt.Println("GetPredecessorReply: ", x)
+	}
+	
+	// node ∃ (Predecessor, Successor)
+	if x.Predecessor != "" && between(Hash(node.Address), Hash(x.Predecessor), Hash(node.Successor), false){
+		fmt.Printf("Setting successor \n")
 		node.Successor = x.Predecessor
 	}
 	
-  notifyArgs := new(NotifyArgs)
+  	notifyArgs := new(NotifyArgs)
 	notifyArgs.CallingNode = node
 	notifyReply := new(NotifyReply)
+	// You are your own successor
+	
+	if node.Successor == node.Address{
+		return
+	} 
+	
 	err := call("Node.Notify", node.Successor, notifyArgs, notifyReply)
 	if err != nil {
 		log.Fatal(err)
 	}
+	
 }
 
 // Fix the finger table of a given node
@@ -153,8 +169,8 @@ func (node *Node) CheckPredecessor() {
   fmt.Println("--------------------")
 }
 
-func (node *Node) GetPredecessor(args *Empty, reply *FindSuccessorReply) error {
-	reply.Successor = node.Predecessor
+func (node *Node) GetPredecessor(args *Empty, reply *GetPredecessorReply) error {
+	reply.Predecessor = node.Predecessor
 	return nil
 }
 
