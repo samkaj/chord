@@ -167,6 +167,14 @@ func (node *Node) CheckPredecessor() {
   fmt.Println("Successor: ", node.Successor)
   fmt.Println("Predecessor: ", node.Predecessor)
   fmt.Println("--------------------")
+  err := call("Node.Ping", node.Predecessor, &Empty{}, &Empty{})
+  if err != nil {
+    node.Predecessor = ""
+  }
+}
+
+func (node *Node) Ping(args *Empty, reply *Empty) error {
+  return nil
 }
 
 func (node *Node) GetPredecessor(args *Empty, reply *GetPredecessorReply) error {
