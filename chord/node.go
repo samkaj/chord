@@ -18,7 +18,7 @@ type Node struct {
 	StabilizeInterval        int
 	FixFingersInterval       int
 	CheckPredecessorInterval int
-	R 						 int
+	R                        int
 }
 
 // Create a new node with the given address
@@ -28,8 +28,6 @@ func (node *Node) CreateNode(address string) {
 	node.Predecessor = null
 	node.FingerTable = make([]string, 0)
 	node.Data = make(map[string]string)
-	
-	
 }
 
 func (node *Node) Start() {
@@ -87,7 +85,6 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 	}
 	return nil
 }
-
 
 // Notify a node that it may be its predecessor
 func (node *Node) Notify(args *NotifyArgs, reply *Empty) error {
@@ -148,7 +145,6 @@ func (node *Node) Stabilize() {
 	notifyArgs := new(NotifyArgs)
 	notifyArgs.CallingNode = node
 	notifyReply := new(NotifyReply)
-	// You are your own successor
 
 	if node.Successors[0] == node.Address {
 		return
@@ -156,10 +152,10 @@ func (node *Node) Stabilize() {
 
 	err := call("Node.Notify", node.Successors[0], notifyArgs, notifyReply)
 	if err != nil {
-		log.Fatal(err)
+		node.Successors = node.Successors[1:]
 	}
 
-	// Get successors sucessor list 
+	// Get successors sucessor list
 	// If successorlist length >= r remove last entry
 	// Add successor to successor list
 	// Set our own successorlist
@@ -170,10 +166,10 @@ func (node *Node) Stabilize() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var successorlistReply  []string
+	var successorlistReply []string
 	if len(getSuccessorlistReply.Successors) >= node.R {
 
-		successorlistReply = getSuccessorlistReply.Successors[:len(getSuccessorlistReply.Successors) - 1]
+		successorlistReply = getSuccessorlistReply.Successors[:len(getSuccessorlistReply.Successors)-1]
 	}
 	node.Successors = append([]string{node.Successors[0]}, successorlistReply...)
 
