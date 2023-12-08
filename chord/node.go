@@ -66,7 +66,7 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 		return nil
 	}
 
-	if between(Hash(node.Address), ToBigInt(args.CallingNode.ID), Hash(node.Successor), true) {
+	if between(Hash(node.Address), Hash(args.CallingNode.Address), Hash(node.Successor), true) {
 		reply.Successor = node.Successor
 	} else {
 		closestPrecedingNodeArgs := new(ClosestPrecedingNodeArgs)
