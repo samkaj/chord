@@ -35,6 +35,6 @@ func jump(address string, fingerentry int) *big.Int {
 	return new(big.Int).Mod(sum, hashMod)
 }
 
-func equals(a, b*big.Int) bool {
-  return a.Cmp(b) == 0
+func equals(a, b *big.Int) bool {
+	return a.Cmp(b) == 0
 }
