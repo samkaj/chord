@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+  log.SetFlags(log.LstdFlags | log.Lshortfile)
 	a := flag.String("a", "", "the chord address")
 	j := flag.String("j", "", "the join address")
   tcp := flag.Int("tcp", 0, "check predecessor interval")

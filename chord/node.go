@@ -96,7 +96,7 @@ func (node *Node) Notify(args *NotifyArgs, reply *Empty) error {
 
 func (node *Node) ClosestPrecedingNode(args *ClosestPrecedingNodeArgs, reply *ClosestPrecedingNodeReply) error {
 	// TODO: use finger table
-	reply.Node = node.Address
+	reply.Node = node.Successor
 	return nil
 
 }
