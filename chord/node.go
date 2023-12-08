@@ -168,8 +168,7 @@ func (node *Node) Stabilize() {
 	}
 	var successorlistReply []string
 	if len(getSuccessorlistReply.Successors) >= node.R {
-
-		successorlistReply = getSuccessorlistReply.Successors[:len(getSuccessorlistReply.Successors)-1]
+		successorlistReply = getSuccessorlistReply.Successors[:node.R-1]
 	}
 	node.Successors = append([]string{node.Successors[0]}, successorlistReply...)
 
