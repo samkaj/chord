@@ -61,11 +61,10 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 	if args.CallingNode.ID == node.ID {
 		return nil
 	}
-	if(node.Successor == node.Address){
+	if node.Successor == node.Address {
 		reply.Successor = node.Successor
 		return nil
 	}
-
 
 	if between(ToBigInt(node.ID), ToBigInt(args.CallingNode.ID), Hash(node.Successor), true) {
 		reply.Successor = node.Successor
@@ -122,35 +121,35 @@ func (node *Node) UpdatePredecessor() {
 
 // Stabilize the ring
 func (node *Node) Stabilize() {
-	
+
 	x := new(GetPredecessorReply)
 	x.Predecessor = node.Predecessor
-	if node.Successor != node.Address{
+	if node.Successor != node.Address {
 		x = new(GetPredecessorReply)
 		call("Node.GetPredecessor", node.Successor, &Empty{}, x)
 		fmt.Println("GetPredecessorReply: ", x)
 	}
-	
+
 	// node ∃ (Predecessor, Successor)
-	if x.Predecessor != "" && between(Hash(node.Address), Hash(x.Predecessor), Hash(node.Successor), false){
+	if x.Predecessor != "" && between(Hash(node.Address), Hash(x.Predecessor), Hash(node.Successor), false) {
 		fmt.Printf("Setting successor \n")
 		node.Successor = x.Predecessor
 	}
-	
-  	notifyArgs := new(NotifyArgs)
+
+	notifyArgs := new(NotifyArgs)
 	notifyArgs.CallingNode = node
 	notifyReply := new(NotifyReply)
 	// You are your own successor
-	
-	if node.Successor == node.Address{
+
+	if node.Successor == node.Address {
 		return
-	} 
-	
+	}
+
 	err := call("Node.Notify", node.Successor, notifyArgs, notifyReply)
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 }
 
 // Fix the finger table of a given node
@@ -161,20 +160,20 @@ func (node *Node) FixFingers() {
 // Check the predecessor of a given node
 func (node *Node) CheckPredecessor() {
 	// TODO
-  fmt.Println("--------Node--------")
-  fmt.Println("ID: ", node.ID)
-  fmt.Println("Adress: ", node.Address)
-  fmt.Println("Successor: ", node.Successor)
-  fmt.Println("Predecessor: ", node.Predecessor)
-  fmt.Println("--------------------")
-  err := call("Node.Ping", node.Predecessor, &Empty{}, &Empty{})
-  if err != nil {
-    node.Predecessor = ""
-  }
+	fmt.Println("--------Node--------")
+	fmt.Println("ID: ", node.ID)
+	fmt.Println("Adress: ", node.Address)
+	fmt.Println("Successor: ", node.Successor)
+	fmt.Println("Predecessor: ", node.Predecessor)
+	fmt.Println("--------------------")
+	err := call("Node.Ping", node.Predecessor, &Empty{}, &Empty{})
+	if err != nil {
+		node.Predecessor = ""
+	}
 }
 
 func (node *Node) Ping(args *Empty, reply *Empty) error {
-  return nil
+	return nil
 }
 
 func (node *Node) GetPredecessor(args *Empty, reply *GetPredecessorReply) error {
