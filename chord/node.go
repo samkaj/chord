@@ -66,7 +66,7 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 		return nil
 	}
 
-	if between(ToBigInt(node.ID), ToBigInt(args.CallingNode.ID), Hash(node.Successor), true) {
+	if between(Hash(node.Address), ToBigInt(args.CallingNode.ID), Hash(node.Successor), true) {
 		reply.Successor = node.Successor
 	} else {
 		closestPrecedingNodeArgs := new(ClosestPrecedingNodeArgs)
@@ -87,7 +87,7 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 
 // Notify a node that it may be its predecessor
 func (node *Node) Notify(args *NotifyArgs, reply *Empty) error {
-	if node.Predecessor == "" || between(Hash(node.Predecessor), ToBigInt(args.CallingNode.ID), ToBigInt(node.ID), false) {
+	if node.Predecessor == "" || between(Hash(node.Predecessor), Hash(args.CallingNode.Address), Hash(node.Address), false) {
 		fmt.Printf("Setting predecessor to: %s\n", args.CallingNode.Address)
 		node.Predecessor = args.CallingNode.Address
 	}
