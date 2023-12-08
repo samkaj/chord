@@ -19,6 +19,7 @@ func main() {
 	flag.Parse()
 	node := chord.Node{}
   
+  node.M = 160
   node.CheckPredecessorInterval = *tcp
   node.StabilizeInterval = *ts
   node.FixFingersInterval = *tff

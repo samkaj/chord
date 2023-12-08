@@ -8,10 +8,10 @@ import (
 	"net/rpc"
 )
 
-type Empty struct {}
+type Empty struct{}
 
 type FindSuccessorArgs struct {
-  CallingNode *Node
+	Key string
 }
 
 type FindSuccessorReply struct {
@@ -19,27 +19,27 @@ type FindSuccessorReply struct {
 }
 
 type GetPredecessorReply struct {
-    Predecessor string
+	Predecessor string
 }
 
 type NotifyArgs struct {
-  CallingNode *Node
+	Key string
 }
 
 type NotifyReply struct {
-  Success bool
+	Success bool
 }
 
 type ClosestPrecedingNodeArgs struct {
-  CallingNode *Node
+	Key string
 }
 
 type ClosestPrecedingNodeReply struct {
-  Node string
+	Node string
 }
 
-type GetSuccessorlistArgs struct {}
-type GetSuccessorlistReply struct{
+type GetSuccessorlistArgs struct{}
+type GetSuccessorlistReply struct {
 	Successors []string
 }
 
