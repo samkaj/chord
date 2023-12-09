@@ -9,13 +9,13 @@ import (
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-  logFile := "log.txt"
-  f, err := os.OpenFile(logFile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
-  if err != nil {
-    log.Fatalf("error opening file: %v", err)
-  }
-  defer f.Close()
-  log.SetOutput(f)
+	logFile := "log.txt"
+	f, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	defer f.Close()
+	log.SetOutput(f)
 	a := flag.String("a", "", "the chord address")
 	j := flag.String("j", "", "the join address")
 	tcp := flag.Int("tcp", 0, "check predecessor interval")
@@ -29,7 +29,7 @@ func main() {
 	node.CheckPredecessorInterval = *tcp
 	node.StabilizeInterval = *ts
 	node.FixFingersInterval = *tff
-	node.Successors = make([]string, *r)
+	node.Successors = make([]chord.NodeRef, *r)
 	node.R = *r
 	node.ID = chord.Hash(*a).String()
 	log.Println("addr", *a)

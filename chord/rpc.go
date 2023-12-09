@@ -10,20 +10,25 @@ import (
 
 type Empty struct{}
 
+type NodeRef struct {
+	Address   string
+	publicKey string
+}
+
 type FindSuccessorArgs struct {
 	Key string
 }
 
 type FindSuccessorReply struct {
-	Successor string
+	Successor NodeRef
 }
 
 type GetPredecessorReply struct {
-	Predecessor string
+	Predecessor NodeRef
 }
 
 type NotifyArgs struct {
-	Key string
+	Key NodeRef
 }
 
 type NotifyReply struct {
@@ -35,12 +40,12 @@ type ClosestPrecedingNodeArgs struct {
 }
 
 type ClosestPrecedingNodeReply struct {
-	Node string
+	Node NodeRef
 }
 
 type GetSuccessorlistArgs struct{}
 type GetSuccessorlistReply struct {
-	Successors []string
+	Successors []NodeRef
 }
 
 func (node *Node) ServeAndListen() {
