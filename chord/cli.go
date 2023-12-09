@@ -61,17 +61,17 @@ func (c *CLI) lookup(key string) {
 }
 
 func (c *CLI) findSuccessor(key string) string {
-  reply := new(FindSuccessorReply)
-  args := new(FindSuccessorArgs)
-  args.Key = key
+	reply := new(FindSuccessorReply)
+	args := new(FindSuccessorArgs)
+	args.Key = key
 
-  err := call("Node.FindSuccessor", c.Node.Address, args, reply)
-  if err != nil {
-    return "failed to find successor"
-  }
+	err := call("Node.FindSuccessor", c.Node.Address, args, reply)
+	if err != nil {
+		return "Failed to find successor"
+	}
 
-  addr := reply.Successor.Address
-  return fmt.Sprintf("ID: %s\nAddress: %s\n", Hash(addr), addr)
+	addr := reply.Successor.Address
+	return fmt.Sprintf("ID: %s\nAddress: %s\n", Hash(addr), addr)
 }
 
 // Takes the location of a file on a local disk, then performs a lookup.
@@ -81,8 +81,12 @@ func (c *CLI) storeFile(path string) {
 		fmt.Fprintf(os.Stderr, "No path supplied\n")
 		return
 	}
-	TLSSend(c.Node.Successors[0], []byte("Hello from client"))
-	fmt.Fprintf(os.Stdout, "StoreFile(%s)\n", path)
+	data, err := readFile(path)
+  if err != nil {
+    fmt.Fprintf(os.Stderr, "Failed to read file: %s\n", err)
+    return
+  }
+	c.Node.Store(path, data)
 }
 
 // Outputs its local state information at the current time, which consists of:

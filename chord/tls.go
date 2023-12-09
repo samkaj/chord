@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
+	"strings"
 )
 
 func (node *Node) TLSListen() {
@@ -29,11 +31,11 @@ func (node *Node) TLSListen() {
 			continue
 		}
 		log.Println("Accepted TLS connection")
-		go handleConnection(conn)
+		go node.handleConnection(conn)
 	}
 }
 
-func handleConnection(conn net.Conn) {
+func (node *Node) handleConnection(conn net.Conn) {
 	defer conn.Close()
 	buffer := make([]byte, 1024)
 	n, err := conn.Read(buffer)
@@ -43,10 +45,21 @@ func handleConnection(conn net.Conn) {
 	}
 
 	data := buffer[:n]
-	log.Printf("Received: %s\n", string(data))
+	fileName := string(data[:strings.Index(string(data), "\n")])
+	data = data[strings.Index(string(data), "\n")+1:]
+	file, err := os.Create(node.StoragePath + "/" + fileName)
+	if err != nil {
+		fmt.Println("Failed to create file: ", err)
+	}
+	defer file.Close()
+
+	_, err = file.Write(data)
+	if err != nil {
+		fmt.Println("Failed to write to file: ", err)
+	}
 }
 
-func TLSSend(nodeRef NodeRef, message []byte) {
+func TLSSend(nodeRef NodeRef, fileName string, data []byte) {
 	cer, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
 
 	caCertPool := x509.NewCertPool()
@@ -55,10 +68,15 @@ func TLSSend(nodeRef NodeRef, message []byte) {
 
 	conn, err := tls.Dial("tcp", nodeRef.TLSAddress, config)
 	if err != nil {
-    fmt.Println("TLS Dial error: ", err)
+		fmt.Println("TLS Dial error: ", err)
 		log.Fatal(err)
 	}
 	defer conn.Close()
-	log.Println("TLS Connected to localhost:3001")
-	conn.Write([]byte("Hello from client"))
+
+	header := []byte(fileName + "\n")
+	data = append(header, data...)
+	_, err = conn.Write(data)
+	if err != nil {
+		fmt.Println("TLS Write error: ", err)
+	}
 }

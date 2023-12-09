@@ -49,6 +49,15 @@ type GetSuccessorlistReply struct {
 	Successors []NodeRef
 }
 
+type StoreFileArgs struct {
+  Path string
+  Data []byte
+}
+
+type StoreFileReply struct {
+  Success bool
+}
+
 func (node *Node) ServeAndListen() {
 	rpc.Register(node)
 	rpc.HandleHTTP()

@@ -1,8 +1,11 @@
 package chord
 
 import (
+	"bufio"
 	"crypto/sha1"
+	"fmt"
 	"math/big"
+	"os"
 )
 
 const keySize = sha1.Size * 8
@@ -37,4 +40,25 @@ func jump(address string, fingerentry int) *big.Int {
 
 func equals(a, b *big.Int) bool {
 	return a.Cmp(b) == 0
+}
+
+func readFile(path string) ([]byte, error) {
+  file, err := os.Open(path)
+  if err != nil {
+    fmt.Fprintf(os.Stderr, "Failed to open file: %s\n", err)
+    return nil, err
+  }
+  defer file.Close()
+
+  scanner := bufio.NewScanner(file)
+  scanner.Split(bufio.ScanBytes)
+  var data []byte
+  for scanner.Scan() {
+    data = append(data, scanner.Bytes()...)
+  }
+  if err := scanner.Err(); err != nil {
+    fmt.Fprintf(os.Stderr, "Failed to read file: %s\n", err)
+    return nil, err
+  }
+  return data, nil
 }

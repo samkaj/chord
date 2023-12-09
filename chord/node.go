@@ -18,7 +18,6 @@ type Node struct {
 	Predecessor              NodeRef
 	FingerTable              []NodeRef
 	PublicKey                []byte
-	Data                     map[string]string
 	StabilizeInterval        int
 	FixFingersInterval       int
 	CheckPredecessorInterval int
@@ -26,11 +25,11 @@ type Node struct {
 	M                        int
 	Next                     int
 	TLSAddress               string
+	StoragePath              string
 }
 
 // Create a new node with the given address
 func (node *Node) CreateNode(address string) {
-
 	nodeRef := new(NodeRef)
 	nodeRef.Address = address
 	nodeRef.TLSAddress = node.TLSAddress
@@ -44,10 +43,8 @@ func (node *Node) CreateNode(address string) {
 	node.Address = address
 	node.PublicKey = file
 	node.Successors[0] = *nodeRef
-
 	node.Predecessor = *&NodeRef{TLSAddress: null, Address: null, PublicKey: []byte(null)}
 	node.FingerTable = make([]NodeRef, node.M)
-	node.Data = make(map[string]string)
 }
 
 func (node *Node) Start() {
@@ -73,7 +70,6 @@ func (node *Node) Join(address string) {
 		log.Fatal(err)
 	}
 	node.Successors[0] = reply.Successor
-	log.Printf("Successor: %s\n", node.Successors[0])
 	node.Start()
 }
 
@@ -122,7 +118,20 @@ func (node *Node) ClosestPrecedingNode(args *ClosestPrecedingNodeArgs, reply *Cl
 	}
 	reply.Node = node.Successors[0]
 	return nil
+}
 
+// Stores a file in the ring by finding the correct succesor and then using TLSSend to send the file to the successor.
+func (node *Node) Store(path string, data []byte) error {
+  succArgs := new(FindSuccessorArgs)
+  succArgs.Key = path
+  succReply := new(FindSuccessorReply)
+  err := call("Node.FindSuccessor", node.Address, succArgs, succReply)
+  if err != nil {
+    return fmt.Errorf("failed to find successor: %w", err)
+  }
+
+  TLSSend(succReply.Successor, path, data)
+  return nil
 }
 
 // Stabilize the ring
@@ -167,8 +176,8 @@ func (node *Node) Stabilize() {
 	if len(getSuccessorlistReply.Successors) >= node.R {
 		successorlistReply = getSuccessorlistReply.Successors[:node.R-1]
 	}
-	node.Successors = append([]NodeRef{node.Successors[0]}, successorlistReply...)
 
+	node.Successors = append([]NodeRef{node.Successors[0]}, successorlistReply...)
 }
 
 // Fix the finger table of a given node

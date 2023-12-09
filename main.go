@@ -34,6 +34,14 @@ func main() {
 	node.R = *r
 	node.ID = chord.Hash(*a).String()
   node.TLSAddress = *tls
+
+  // random storage dir name
+  node.StoragePath = "storage-" + chord.Hash(*a).String()
+  err = os.Mkdir(node.StoragePath, 0755)
+  if err != nil {
+    log.Println("Failed to create storage directory: ", err)
+  }
+
 	go node.TLSListen()
 	node.CreateNode(*a)
 	if *j == "" {
