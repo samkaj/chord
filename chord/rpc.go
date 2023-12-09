@@ -12,7 +12,7 @@ type Empty struct{}
 
 type NodeRef struct {
 	Address   string
-	publicKey string
+	publicKey []byte
 }
 
 type FindSuccessorArgs struct {

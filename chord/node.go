@@ -15,7 +15,7 @@ type Node struct {
 	Successors               []NodeRef
 	Predecessor              NodeRef
 	FingerTable              []NodeRef
-	PublicKey                string
+	PublicKey                []byte
 	Data                     map[string]string
 	StabilizeInterval        int
 	FixFingersInterval       int
@@ -35,10 +35,15 @@ func (node *Node) CreateNode(address string) {
 	if err != nil {
 		log.Fatal("Failed to read certificate file: \n Run: openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes \n To generate a cert.pem", err)
 	}
-	nodeRef.publicKey = string(file)
+	log.Println("Loaded TLS keypair File: ", file)
+	log.Println("Loaded TLS keypair: ", string(file[:]))
+
+	nodeRef.publicKey = file
 	node.Address = address
+	node.PublicKey = file
 	node.Successors[0] = *nodeRef
-	node.Predecessor = *&NodeRef{Address: null, publicKey: null}
+
+	node.Predecessor = *&NodeRef{Address: null, publicKey: []byte(null)}
 	node.FingerTable = make([]NodeRef, node.M)
 	node.Data = make(map[string]string)
 }
@@ -209,10 +214,12 @@ func (node *Node) CheckPredecessor() {
 	log.Println("Adress: ", node.Address)
 	log.Println("Successors: ", node.Successors)
 	log.Println("Predecessor: ", node.Predecessor)
+	log.Println("FingerTable: ", node.FingerTable)
+	log.Println("PublicKey Successor1: ", node.Successors[0].publicKey)
 	log.Println("--------------------")
 	err := call("Node.Ping", node.Predecessor.Address, &Empty{}, &Empty{})
 	if err != nil {
-		node.Predecessor = *&NodeRef{Address: null, publicKey: null}
+		node.Predecessor = *&NodeRef{Address: null, publicKey: []byte(null)}
 	}
 }
 
