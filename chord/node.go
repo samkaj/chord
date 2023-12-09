@@ -190,16 +190,6 @@ func (node *Node) FixFingers() {
 
 // Check the predecessor of a given node
 func (node *Node) CheckPredecessor() {
-	var successors []string
-	for i, v := range node.Successors {
-
-		successors = append(successors, fmt.Sprintf("{%d: "+v.Address+" %d"+"}", i, len(v.PublicKey)))
-	}
-	var fingers []string
-	for i, v := range node.FingerTable {
-
-		fingers = append(fingers, fmt.Sprintf("{%d: "+v.Address+" %d"+"}", i, len(v.PublicKey)))
-	}
 	err := call("Node.Ping", node.Predecessor.Address, &Empty{}, &Empty{})
 	if err != nil {
 		node.Predecessor = *&NodeRef{Address: null, PublicKey: []byte(null), TLSAddress: null}
