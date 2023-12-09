@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -124,24 +125,6 @@ func (node *Node) ClosestPrecedingNode(args *ClosestPrecedingNodeArgs, reply *Cl
 
 }
 
-// Update the finger table of a given node
-func (node *Node) UpdateFingerTable(key string, s int) {
-	// TODO
-	log.Fatal("Not implemented")
-}
-
-// Update the successor of a given node
-func (node *Node) UpdateSuccessor() {
-	// TODO
-	log.Fatal("Not implemented")
-}
-
-// Update the predecessor of a given node
-func (node *Node) UpdatePredecessor() {
-	// TODO
-	log.Fatal("Not implemented")
-}
-
 // Stabilize the ring
 func (node *Node) Stabilize() {
 	x := new(GetPredecessorReply)
@@ -157,7 +140,7 @@ func (node *Node) Stabilize() {
 	}
 
 	notifyArgs := new(NotifyArgs)
-	notifyArgs.Key = *&NodeRef{Address: node.Address, PublicKey: node.PublicKey}
+	notifyArgs.Key = *&NodeRef{Address: node.Address, PublicKey: node.PublicKey, TLSAddress: node.TLSAddress}
 	notifyReply := new(NotifyReply)
 
 	if node.Successors[0].Address == node.Address {
@@ -207,28 +190,37 @@ func (node *Node) FixFingers() {
 
 // Check the predecessor of a given node
 func (node *Node) CheckPredecessor() {
-	// TODO
-	log.Println("--------Node--------")
-	log.Println("ID: ", node.ID)
-	log.Println("Adress: ", node.Address)
 	var successors []string
 	for i, v := range node.Successors {
 
 		successors = append(successors, fmt.Sprintf("{%d: "+v.Address+" %d"+"}", i, len(v.PublicKey)))
 	}
-	log.Println("Successors: ", successors)
-	log.Println("Predecessor: ", fmt.Sprintf(node.Predecessor.Address+" %d", len(node.Predecessor.PublicKey)))
 	var fingers []string
 	for i, v := range node.FingerTable {
 
 		fingers = append(fingers, fmt.Sprintf("{%d: "+v.Address+" %d"+"}", i, len(v.PublicKey)))
 	}
-	log.Println("FingerTable: ", fingers)
-	log.Println("--------------------")
 	err := call("Node.Ping", node.Predecessor.Address, &Empty{}, &Empty{})
 	if err != nil {
 		node.Predecessor = *&NodeRef{Address: null, PublicKey: []byte(null), TLSAddress: null}
 	}
+}
+
+func (node *Node) GetInfo() string {
+	var info strings.Builder
+	info.WriteString("Node:\n")
+	info.WriteString(fmt.Sprintf("  ID: %s\n  Address: %s\n\n", node.ID, node.Address))
+	info.WriteString("Successors:\n")
+	for _, s := range node.Successors {
+		info.WriteString(fmt.Sprintf("  ID: %s\n  Address: %s\n\n", Hash(s.Address), s.Address))
+	}
+	info.WriteString("Fingers:\n")
+	for _, finger := range node.FingerTable {
+		if finger.Address != "" {
+			info.WriteString(fmt.Sprintf("  ID: %s\n  Address: %s\n\n", Hash(finger.Address), finger.Address))
+		}
+	}
+	return info.String()
 }
 
 func (node *Node) Ping(args *Empty, reply *Empty) error {

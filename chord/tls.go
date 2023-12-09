@@ -3,6 +3,7 @@ package chord
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"log"
 	"net"
 )
@@ -54,6 +55,7 @@ func TLSSend(nodeRef NodeRef, message []byte) {
 
 	conn, err := tls.Dial("tcp", nodeRef.TLSAddress, config)
 	if err != nil {
+    fmt.Println("TLS Dial error: ", err)
 		log.Fatal(err)
 	}
 	defer conn.Close()

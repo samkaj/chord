@@ -57,7 +57,21 @@ func (c *CLI) lookup(key string) {
 		fmt.Fprintf(os.Stderr, "No key supplied\n")
 		return
 	}
-	fmt.Fprintf(os.Stdout, "Lookup(%s)\n", key)
+	fmt.Fprintf(os.Stdout, c.findSuccessor(key))
+}
+
+func (c *CLI) findSuccessor(key string) string {
+  reply := new(FindSuccessorReply)
+  args := new(FindSuccessorArgs)
+  args.Key = key
+
+  err := call("Node.FindSuccessor", c.Node.Address, args, reply)
+  if err != nil {
+    return "failed to find successor"
+  }
+
+  addr := reply.Successor.Address
+  return fmt.Sprintf("ID: %s\nAddress: %s\n", Hash(addr), addr)
 }
 
 // Takes the location of a file on a local disk, then performs a lookup.
@@ -77,7 +91,7 @@ func (c *CLI) storeFile(path string) {
 // 3. The node information for all nodes in the finger table
 // where “node information” corresponds to the identifier, IP address, and port for a given node.
 func (c *CLI) printState() {
-	fmt.Fprintf(os.Stdout, "PrintState()\n")
+	fmt.Fprintf(os.Stdout, "%s\n", c.Node.GetInfo())
 }
 
 // Prints the usage message.
