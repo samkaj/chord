@@ -3,6 +3,7 @@ package chord
 import (
 	"fmt"
 	"log"
+	"math/big"
 	"os"
 	"time"
 )
@@ -35,8 +36,6 @@ func (node *Node) CreateNode(address string) {
 	if err != nil {
 		log.Fatal("Failed to read certificate file: \n Run: openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes \n To generate a cert.pem", err)
 	}
-	log.Println("Loaded TLS keypair File: ", file)
-	log.Println("Loaded TLS keypair: ", string(file[:]))
 
 	nodeRef.PublicKey = file
 	node.Address = address
@@ -95,14 +94,12 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 
 		reply.Successor = closestPrecedingNodeReply.Node
 	}
-	fmt.Printf("Sending Successor: %v with  public key: %v \n", node.Successors[0].Address, len(node.Successors[0].PublicKey))
 	return nil
 }
 
 // Notify a node that it may be its predecessor
 func (node *Node) Notify(args *NotifyArgs, reply *Empty) error {
 	if node.Predecessor.Address == "" || between(Hash(node.Predecessor.Address), Hash(args.Key.Address), Hash(node.Address), false) {
-		log.Printf("Setting predecessor to: %s\n", args.Key)
 		node.Predecessor = args.Key
 	}
 	return nil
@@ -150,12 +147,10 @@ func (node *Node) Stabilize() {
 	if node.Successors[0].Address != node.Address {
 		x = new(GetPredecessorReply)
 		call("Node.GetPredecessor", node.Successors[0].Address, &Empty{}, x)
-		log.Println("GetPredecessorReply: ", x)
 	}
 
 	// node ∃ (Predecessor, Successor)
 	if x.Predecessor.Address != "" && between(Hash(node.Address), Hash(x.Predecessor.Address), Hash(node.Successors[0].Address), false) {
-		fmt.Printf("Setting successor %v\n", x.Predecessor)
 		node.Successors[0] = x.Predecessor
 	}
 
@@ -193,7 +188,7 @@ func (node *Node) Stabilize() {
 
 // Fix the finger table of a given node
 func (node *Node) FixFingers() {
-	/* node.Next = node.Next + 1
+	node.Next = node.Next + 1
 	if node.Next > node.M {
 		node.Next = 1
 	}
@@ -205,7 +200,7 @@ func (node *Node) FixFingers() {
 	if err != nil {
 		return
 	}
-	node.FingerTable[node.Next] = succReply.Successor */
+	node.FingerTable[node.Next] = succReply.Successor
 }
 
 // Check the predecessor of a given node
@@ -214,12 +209,20 @@ func (node *Node) CheckPredecessor() {
 	log.Println("--------Node--------")
 	log.Println("ID: ", node.ID)
 	log.Println("Adress: ", node.Address)
-	log.Println("Successors: ", node.Successors)
-	log.Println("Predecessor: ", node.Predecessor)
-	log.Println("FingerTable: ", node.FingerTable)
-	log.Println("PublicKey Successor1: ", node.Successors[0].PublicKey)
+	var successors []string
+	for i, v := range node.Successors {
+
+		successors = append(successors, fmt.Sprintf("{%d: "+v.Address+" %d"+"}", i, len(v.PublicKey)))
+	}
+	log.Println("Successors: ", successors)
+	log.Println("Predecessor: ", fmt.Sprintf(node.Predecessor.Address+" %d", len(node.Predecessor.PublicKey)))
+	var fingers []string
+	for i, v := range node.FingerTable {
+
+		fingers = append(fingers, fmt.Sprintf("{%d: "+v.Address+" %d"+"}", i, len(v.PublicKey)))
+	}
+	log.Println("FingerTable: ", fingers)
 	log.Println("--------------------")
-	fmt.Printf("Checking Successor: %v with  public key: %v \n", node.Successors[0].Address, len(node.Successors[0].PublicKey))
 	err := call("Node.Ping", node.Predecessor.Address, &Empty{}, &Empty{})
 	if err != nil {
 		node.Predecessor = *&NodeRef{Address: null, PublicKey: []byte(null)}
