@@ -24,6 +24,7 @@ type Node struct {
 	R                        int
 	M                        int
 	Next                     int
+	TLSAddress               string
 }
 
 // Create a new node with the given address
@@ -31,6 +32,7 @@ func (node *Node) CreateNode(address string) {
 
 	nodeRef := new(NodeRef)
 	nodeRef.Address = address
+	nodeRef.TLSAddress = node.TLSAddress
 
 	file, err := os.ReadFile("./cert.pem")
 	if err != nil {
@@ -42,7 +44,7 @@ func (node *Node) CreateNode(address string) {
 	node.PublicKey = file
 	node.Successors[0] = *nodeRef
 
-	node.Predecessor = *&NodeRef{Address: null, PublicKey: []byte(null)}
+	node.Predecessor = *&NodeRef{TLSAddress: null, Address: null, PublicKey: []byte(null)}
 	node.FingerTable = make([]NodeRef, node.M)
 	node.Data = make(map[string]string)
 }
@@ -168,7 +170,7 @@ func (node *Node) Stabilize() {
 	}
 
 	if len(node.Successors) == 0 {
-		temp := *&NodeRef{Address: node.Address, PublicKey: node.PublicKey}
+		temp := *&NodeRef{TLSAddress: node.TLSAddress, Address: node.Address, PublicKey: node.PublicKey}
 		node.Successors = append(node.Successors, temp)
 	}
 
@@ -225,7 +227,7 @@ func (node *Node) CheckPredecessor() {
 	log.Println("--------------------")
 	err := call("Node.Ping", node.Predecessor.Address, &Empty{}, &Empty{})
 	if err != nil {
-		node.Predecessor = *&NodeRef{Address: null, PublicKey: []byte(null)}
+		node.Predecessor = *&NodeRef{Address: null, PublicKey: []byte(null), TLSAddress: null}
 	}
 }
 

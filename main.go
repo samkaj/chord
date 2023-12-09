@@ -22,6 +22,7 @@ func main() {
 	ts := flag.Int("ts", 0, "stabilize interval")
 	tff := flag.Int("ff", 0, "fix fingers interval")
 	r := flag.Int("r", 1, "number of successors maintained")
+  tls := flag.String("tls", "", "the tls address")
 	flag.Parse()
 	node := chord.Node{}
 
@@ -32,7 +33,7 @@ func main() {
 	node.Successors = make([]chord.NodeRef, *r)
 	node.R = *r
 	node.ID = chord.Hash(*a).String()
-	log.Println("addr", *a)
+  node.TLSAddress = *tls
 	go node.TLSListen()
 	node.CreateNode(*a)
 	if *j == "" {

@@ -67,7 +67,6 @@ func (c *CLI) storeFile(path string) {
 		fmt.Fprintf(os.Stderr, "No path supplied\n")
 		return
 	}
-	fmt.Printf("Sending file")
 	TLSSend(c.Node.Successors[0], []byte("Hello from client"))
 	fmt.Fprintf(os.Stdout, "StoreFile(%s)\n", path)
 }

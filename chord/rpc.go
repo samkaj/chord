@@ -11,8 +11,9 @@ import (
 type Empty struct{}
 
 type NodeRef struct {
-	Address   string
-	PublicKey []byte
+	Address    string
+	PublicKey  []byte
+	TLSAddress string
 }
 
 type FindSuccessorArgs struct {
@@ -56,7 +57,7 @@ func (node *Node) ServeAndListen() {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	fmt.Printf("Listening on %s\n", node.Address)
+	log.Printf("Listening on %s\n", node.Address)
 	err = http.Serve(listener, nil)
 }
 

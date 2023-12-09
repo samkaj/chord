@@ -8,6 +8,7 @@ inputJ=""
 inputTCP=""
 inputTS=""
 inputFF=""
+inputTLS=""
 
 # Process arguments
 while [[ $# -gt 0 ]]; do
@@ -42,6 +43,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        -tls)
+            inputTLS="$2"
+            shift
+            shift
+            ;;
         *)
             echo "Invalid argument: $1"
             exit 1
@@ -58,7 +64,7 @@ fi
 # Construct the command
 command="build/chord -a \"$inputA\""
 [ -n "$inputJ" ] && command+=" -j \"$inputJ\""
-command+=" -tcp \"$inputTCP\" -ts \"$inputTS\" -ff \"$inputFF\" -r \"$inputR\""
+command+=" -tcp \"$inputTCP\" -ts \"$inputTS\" -ff \"$inputFF\" -r \"$inputR\" -tls \"$inputTLS\""
 
 # Run the chord command with the provided arguments
 eval $command
