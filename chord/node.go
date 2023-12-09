@@ -192,7 +192,7 @@ func (node *Node) FixFingers() {
 func (node *Node) CheckPredecessor() {
 	err := call("Node.Ping", node.Predecessor.Address, &Empty{}, &Empty{})
 	if err != nil {
-		node.Predecessor = *&NodeRef{Address: null, PublicKey: []byte(null), TLSAddress: null}
+		node.Predecessor = NodeRef{}
 	}
 }
 
