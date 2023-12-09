@@ -1,6 +1,7 @@
 package chord
 
 import (
+	"fmt"
 	"log"
 	"math/big"
 	"os"
@@ -78,6 +79,7 @@ func (node *Node) Join(address string) {
 // Find the successor of a given key
 func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorReply) error {
 	if between(Hash(node.Address), Hash(args.Key), Hash(node.Successors[0].Address), true) {
+
 		reply.Successor = node.Successors[0]
 	} else {
 		closestPrecedingNodeArgs := new(ClosestPrecedingNodeArgs)
@@ -94,6 +96,7 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 
 		reply.Successor = closestPrecedingNodeReply.Node
 	}
+	fmt.Printf("Sending Successor: %v with  public key: %v \n", node.Successors[0].Address, len(node.Successors[0].publicKey))
 	return nil
 }
 
@@ -153,7 +156,7 @@ func (node *Node) Stabilize() {
 
 	// node ∃ (Predecessor, Successor)
 	if x.Predecessor.Address != "" && between(Hash(node.Address), Hash(x.Predecessor.Address), Hash(node.Successors[0].Address), false) {
-		log.Printf("Setting successor \n")
+		fmt.Printf("Setting successor %v\n", x.Predecessor)
 		node.Successors[0] = x.Predecessor
 	}
 
@@ -217,6 +220,7 @@ func (node *Node) CheckPredecessor() {
 	log.Println("FingerTable: ", node.FingerTable)
 	log.Println("PublicKey Successor1: ", node.Successors[0].publicKey)
 	log.Println("--------------------")
+	fmt.Printf("Checking Successor: %v with  public key: %v \n", node.Successors[0].Address, len(node.Successors[0].publicKey))
 	err := call("Node.Ping", node.Predecessor.Address, &Empty{}, &Empty{})
 	if err != nil {
 		node.Predecessor = *&NodeRef{Address: null, publicKey: []byte(null)}
