@@ -37,6 +37,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        -r)
+            inputR="$2"
+            shift
+            shift
+            ;;
         *)
             echo "Invalid argument: $1"
             exit 1
@@ -45,17 +50,15 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Check if all required variables are set
-if [ -z "$inputA" ] || [ -z "$inputTCP" ] || [ -z "$inputTS" ] || [ -z "$inputFF" ]; then
-    echo "Usage: $0 -a inputA [-j inputJ] -tcp inputTCP -ts inputTS -ff inputFF"
+if [ -z "$inputA" ] || [ -z "$inputTCP" ] || [ -z "$inputTS" ] || [ -z "$inputFF" ] || [ -z "$inputR" ]; then
+    echo "Usage: $0 -a inputA [-j inputJ] -tcp inputTCP -ts inputTS -ff inputFF -r inputR" 
     exit 1
 fi
 
 # Construct the command
 command="build/chord -a \"$inputA\""
 [ -n "$inputJ" ] && command+=" -j \"$inputJ\""
-command+=" -tcp \"$inputTCP\" -ts \"$inputTS\" -ff \"$inputFF\""
+command+=" -tcp \"$inputTCP\" -ts \"$inputTS\" -ff \"$inputFF\" -r \"$inputR\""
 
 # Run the chord command with the provided arguments
 eval $command
-
-rm build/chord
