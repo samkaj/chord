@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func TLSListen() {
+func (node *Node) TLSListen() {
 	cer, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
 	if err != nil {
 		log.Fatal(err)
@@ -16,12 +16,14 @@ func TLSListen() {
 	fmt.Println("Loaded TLS keypair: ")
 	config := &tls.Config{Certificates: []tls.Certificate{cer}}
 
-	ln, err := tls.Listen("tcp", ":3001", config)
+	addrSplit := strings.Split(node.Address, ":")
+	addr := addrSplit[0] + ":3001"
+	ln, err := tls.Listen("tcp", addr, config)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer ln.Close()
-	fmt.Println("TLS Listening on port 3001")
+	fmt.Println("TLS Listening on", addr)
 	for {
 		conn, err := ln.Accept()
 		if err != nil {

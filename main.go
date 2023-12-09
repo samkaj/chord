@@ -33,7 +33,7 @@ func main() {
 	node.R = *r
 	node.ID = chord.Hash(*a).String()
 	log.Println("addr", *a)
-	go chord.TLSListen()
+	go node.TLSListen()
 	node.CreateNode(*a)
 	if *j == "" {
 		go node.Start()
