@@ -2,6 +2,7 @@ package chord
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"log"
 	"net"
@@ -60,8 +61,10 @@ func TLSSend(nodeRef NodeRef, message []byte) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Loaded TLS keypair: ")
-	config := &tls.Config{Certificates: []tls.Certificate{cer}, InsecureSkipVerify: true}
+
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(nodeRef.PublicKey)
+	config := &tls.Config{Certificates: []tls.Certificate{cer}, RootCAs: caCertPool}
 
 	conn, err := tls.Dial("tcp", addr, config)
 	if err != nil {
