@@ -86,9 +86,18 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = call("Node.FindSuccessor", closestPrecedingNodeReply.Node.Address, args, reply)
-		if err != nil {
-			log.Fatal(err)
+		fetchSuccess := false
+		for !fetchSuccess {
+			err = call("Node.FindSuccessor", closestPrecedingNodeReply.Node.Address, args, reply)
+			if err != nil {
+				for i, successor := range node.Successors {
+					if successor.Address == closestPrecedingNodeReply.Node.Address {
+						node.Successors = append(node.Successors[:i], node.Successors[i+1:]...)
+					}
+				}
+				continue
+			}
+			fetchSuccess = true
 		}
 
 		reply.Successor = closestPrecedingNodeReply.Node
@@ -182,7 +191,7 @@ func (node *Node) Stabilize() {
 
 // Fix the finger table of a given node
 func (node *Node) FixFingers() {
-	node.Next = (node.Next + 1%node.M)
+	node.Next = ((node.Next + 1) % node.M)
 	if node.Next > node.M {
 		node.Next = 1
 	}
