@@ -46,6 +46,14 @@ func (node *Node) handleConnection(conn net.Conn) {
 
 	data := buffer[:n]
 	fileName := string(data[:strings.Index(string(data), "\n")])
+
+	if !strings.Contains(fileName, "-backup") {
+		fileNameSplit := strings.Split(fileName, ".")
+		backupFileName := fileNameSplit[0] + "-backup." + fileNameSplit[1]
+		for i := 0; i < len(node.Successors); i++ {
+			TLSSend(node.Successors[i], backupFileName, data)
+		}
+	}
 	data = data[strings.Index(string(data), "\n")+1:]
 	file, err := os.Create(node.StoragePath + "/" + fileName)
 	if err != nil {
