@@ -82,10 +82,10 @@ func (c *CLI) storeFile(path string) {
 		return
 	}
 	data, err := readFile(path)
-  if err != nil {
-    fmt.Fprintf(os.Stderr, "Failed to read file: %s\n", err)
-    return
-  }
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to read file: %s\n", err)
+		return
+	}
 	c.Node.Store(path, data)
 }
 

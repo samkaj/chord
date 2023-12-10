@@ -50,12 +50,12 @@ type GetSuccessorlistReply struct {
 }
 
 type StoreFileArgs struct {
-  Path string
-  Data []byte
+	Path string
+	Data []byte
 }
 
 type StoreFileReply struct {
-  Success bool
+	Success bool
 }
 
 func (node *Node) ServeAndListen() {
