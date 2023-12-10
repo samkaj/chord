@@ -122,16 +122,16 @@ func (node *Node) ClosestPrecedingNode(args *ClosestPrecedingNodeArgs, reply *Cl
 
 // Stores a file in the ring by finding the correct succesor and then using TLSSend to send the file to the successor.
 func (node *Node) Store(path string, data []byte) error {
-  succArgs := new(FindSuccessorArgs)
-  succArgs.Key = path
-  succReply := new(FindSuccessorReply)
-  err := call("Node.FindSuccessor", node.Address, succArgs, succReply)
-  if err != nil {
-    return fmt.Errorf("failed to find successor: %w", err)
-  }
+	succArgs := new(FindSuccessorArgs)
+	succArgs.Key = path
+	succReply := new(FindSuccessorReply)
+	err := call("Node.FindSuccessor", node.Address, succArgs, succReply)
+	if err != nil {
+		return fmt.Errorf("failed to find successor: %w", err)
+	}
 
-  TLSSend(succReply.Successor, path, data)
-  return nil
+	TLSSend(succReply.Successor, path, data)
+	return nil
 }
 
 // Stabilize the ring
@@ -182,7 +182,7 @@ func (node *Node) Stabilize() {
 
 // Fix the finger table of a given node
 func (node *Node) FixFingers() {
-	node.Next = node.Next + 1
+	node.Next = (node.Next + 1%node.M)
 	if node.Next > node.M {
 		node.Next = 1
 	}
