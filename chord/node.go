@@ -82,27 +82,40 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 		closestPrecedingNodeArgs := new(ClosestPrecedingNodeArgs)
 		closestPrecedingNodeArgs.Key = args.Key
 		closestPrecedingNodeReply := new(ClosestPrecedingNodeReply)
-		err := call("Node.ClosestPrecedingNode", node.Address, closestPrecedingNodeArgs, closestPrecedingNodeReply)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fetchSuccess := false
-		for !fetchSuccess {
+		callSuccess := false
+		for !callSuccess {
+			err := call("Node.ClosestPrecedingNode", node.Address, closestPrecedingNodeArgs, closestPrecedingNodeReply)
+			if err != nil {
+				log.Fatal(err)
+			}
+
 			err = call("Node.FindSuccessor", closestPrecedingNodeReply.Node.Address, args, reply)
 			if err != nil {
-				for i, successor := range node.Successors {
-					if successor.Address == closestPrecedingNodeReply.Node.Address {
-						node.Successors = append(node.Successors[:i], node.Successors[i+1:]...)
-					}
-				}
+				node.RemoveFromFingerTable(closestPrecedingNodeReply.Node.Address)
+				node.RemoveFromSuccessors(closestPrecedingNodeReply.Node.Address)
 				continue
 			}
-			fetchSuccess = true
 		}
 
 		reply.Successor = closestPrecedingNodeReply.Node
 	}
 	return nil
+}
+
+func (node *Node) RemoveFromFingerTable(address string) {
+	for i, finger := range node.FingerTable {
+		if finger.Address == address {
+			node.FingerTable[i] = NodeRef{}
+		}
+	}
+}
+
+func (node *Node) RemoveFromSuccessors(address string) {
+	for i, successor := range node.Successors {
+		if successor.Address == address {
+			node.Successors = append(node.Successors[:i], node.Successors[i+1:]...)
+		}
+	}
 }
 
 // Notify a node that it may be its predecessor
@@ -147,9 +160,15 @@ func (node *Node) Store(path string, data []byte) error {
 func (node *Node) Stabilize() {
 	x := new(GetPredecessorReply)
 	x.Predecessor = node.Predecessor
+	log.Println("Stabilizing")
 	if node.Successors[0].Address != node.Address {
 		x = new(GetPredecessorReply)
-		call("Node.GetPredecessor", node.Successors[0].Address, &Empty{}, x)
+		err := call("Node.GetPredecessor", node.Successors[0].Address, &Empty{}, x)
+		if err != nil {
+			log.Println("Failed to get predecessor from successor:", err)
+			node.Successors = node.Successors[1:]
+			return
+		}
 	}
 
 	// node ∃ (Predecessor, Successor)
@@ -167,6 +186,7 @@ func (node *Node) Stabilize() {
 
 	err := call("Node.Notify", node.Successors[0].Address, notifyArgs, notifyReply)
 	if err != nil {
+		log.Println("Failed to notify successor:", err)
 		node.Successors = node.Successors[1:]
 	}
 
@@ -179,6 +199,7 @@ func (node *Node) Stabilize() {
 	getSuccessorlistReply := new(GetSuccessorlistReply)
 	err = call("Node.GetSuccessorList", node.Successors[0].Address, getSuccessorlistArgs, getSuccessorlistReply)
 	if err != nil {
+		log.Println("Failed to get successor list from successor:", err)
 		return
 	}
 	var successorlistReply []NodeRef
