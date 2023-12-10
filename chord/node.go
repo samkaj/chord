@@ -182,7 +182,7 @@ func (node *Node) Stabilize() {
 
 // Fix the finger table of a given node
 func (node *Node) FixFingers() {
-	node.Next = (node.Next + 1%node.M)
+	node.Next = ((node.Next + 1) % node.M)
 	if node.Next > node.M {
 		node.Next = 1
 	}
