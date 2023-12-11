@@ -120,7 +120,11 @@ func (node *Node) ClosestPrecedingNode(args *ClosestPrecedingNodeArgs, reply *Cl
 func (node *Node) Store(path string, data []byte) error {
 	for i := 0; i < redundancy; i++ {
 		succArgs := new(FindSuccessorArgs)
-		succArgs.Key = path
+		if i == 0 {
+			succArgs.Key = path
+		} else {
+			succArgs.Key = Hash(path).String()
+		}
 		succReply := new(FindSuccessorReply)
 		err := call("Node.FindSuccessor", node.Address, succArgs, succReply)
 		if err != nil {
