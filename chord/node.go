@@ -71,9 +71,14 @@ func (node *Node) Join(address string) {
 	node.Start()
 }
 
+func bytesToBigInt(b []byte) *big.Int {
+	return new(big.Int).SetBytes(b)
+}
+
 // Find the successor of a given key
 func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorReply) error {
-	if between(Hash(node.Address), Hash(args.Key), Hash(node.Successors[0].Address), true) {
+
+	if between(Hash(node.Address), bytesToBigInt([]byte(args.Key)), Hash(node.Successors[0].Address), true) {
 		reply.Successor = node.Successors[0]
 	} else {
 		closestPrecedingNodeArgs := new(ClosestPrecedingNodeArgs)
@@ -135,8 +140,8 @@ func (node *Node) ClosestPrecedingNode(args *ClosestPrecedingNodeArgs, reply *Cl
 	//		return nil
 	//	}
 	//}
-	// reply.Node = NodeRef{Address: node.Address, PublicKey: node.PublicKey, TLSAddress: node.TLSAddress}
-	reply.Node = node.Successors[0]
+	reply.Node = NodeRef{Address: node.Address, PublicKey: node.PublicKey, TLSAddress: node.TLSAddress}
+	//reply.Node = node.Successors[0]
 	return nil
 }
 
@@ -148,8 +153,8 @@ func (node *Node) ClosestPrecedingNode2(args *ClosestPrecedingNodeArgs, reply *C
 	//		return nil
 	//	}
 	//}
-	reply.Node = node.Successors[0]
-	//reply.Node = NodeRef{Address: node.Address, PublicKey: node.PublicKey, TLSAddress: node.TLSAddress}
+	//reply.Node = node.Successors[0]
+	reply.Node = NodeRef{Address: node.Address, PublicKey: node.PublicKey, TLSAddress: node.TLSAddress}
 	return nil
 }
 
@@ -161,8 +166,9 @@ func (node *Node) Store(path string, data []byte) error {
 		if i == 0 {
 			hashedPath = path
 		} else {
-			fmt.Println("Hashing path: ", hashedPath)
-			hashedPath = Hash(hashedPath).String()
+			for j := 0; j < i; j++ {
+				hashedPath = Hash(hashedPath).String()
+			}
 			fmt.Println("Hashed path: ", hashedPath)
 		}
 		succArgs.Key = hashedPath
@@ -256,20 +262,19 @@ func (node *Node) FixFingers() {
 		node.Next = 1
 	}
 	succArgs := new(FindSuccessorArgs)
-	keyValue := big.NewInt(0)
 
+	bigN := Hash(node.Address)
 	two := big.NewInt(2)
-	exponent := big.NewInt(next - 1)
+	exponent := big.NewInt(int64(node.Next - 1))
 	twoToThePower := new(big.Int).Exp(two, exponent, nil)
 
 	// Calculate n + 2^(next-1)
 	x := new(big.Int).Add(bigN, twoToThePower)
 	// set var x to n + 2^{next-1}
 
-	keyValue.Add(Hash(node.Address), big.NewInt(2).Exp(big.NewInt(2), big.NewInt(int64(node.Next-1)), nil))
 	//log.Println("node hash: ", Hash(node.Address).String())
 	//log.Println("Fixing finger: ", keyValue.String())
-	succArgs.Key = keyValue.String()
+	succArgs.Key = x.String()
 	succReply := new(FindSuccessorReply)
 	err := call("Node.FindSuccessor", node.Address, succArgs, succReply)
 	if err != nil {
