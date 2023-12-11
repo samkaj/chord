@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 )
+
+var ipv4Regex = regexp.MustCompile(`(^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$)|((::0)|(localhost))`)
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -35,12 +38,22 @@ func main() {
 	}
 
 	if *ts < 1 || *ts > 60000 || *tff < 1 || *tff > 60000 || *tcp < 1 || *tcp > 60000 {
-		fmt.Println("ts, tff, and tcp are in milliseconds, and should be between 1 and 60000")
+		fmt.Println("intervals should be between 1 and 60000")
 		os.Exit(1)
 	}
 
 	if *r < 1 || *r > 32 {
-		fmt.Println("r should be between 1 and 32")
+		fmt.Println("-r should be between 1 and 32")
+		os.Exit(1)
+	}
+
+	if !ipv4Regex.MatchString(*a) {
+		fmt.Println("-a should be a valid IPv4 address")
+		os.Exit(1)
+	}
+
+	if !ipv4Regex.MatchString(*ja) && *ja != "" {
+		fmt.Println("-ja should be a valid IPv4 address")
 		os.Exit(1)
 	}
 
