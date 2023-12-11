@@ -25,19 +25,27 @@ func main() {
 	ts := flag.Int("ts", 0, "stabilize interval")
 	tff := flag.Int("ff", 0, "fix fingers interval")
 	r := flag.Int("r", 0, "number of successors maintained")
-	tls := flag.String("tls", "", "the tls address and port")
+	tls := flag.Int("tls", 0, "the tls port")
 	flag.Parse()
 
 	// crash if any of the required flags are not set
-	if *a == "" || *p == 0 || *tcp == 0 || *ts == 0 || *tff == 0 || *r == 0 || *tls == "" || (*ja != "" && *jp == 0) || (*ja == "" && *jp != 0) {
+	if *a == "" || *p == 0 || *tcp == 0 || *ts == 0 || *tff == 0 || *r == 0 || *tls == 0 || (*ja != "" && *jp == 0) || (*ja == "" && *jp != 0) {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
+	if *ts < 1 || *ts > 60000 || *tff < 1 || *tff > 60000 || *tcp < 1 || *tcp > 60000 {
+		fmt.Println("ts, tff, and tcp are in milliseconds, and should be between 1 and 60000")
+		os.Exit(1)
+	}
+
+	if *r < 1 || *r > 32 {
+		fmt.Println("r should be between 1 and 32")
+		os.Exit(1)
+	}
+
 	node := chord.Node{}
-	log.Println("foo", *p)
 	node.Address = fmt.Sprintf("%s:%d", *a, *p)
-	log.Println("bar", node.Address)
 	node.M = 160
 	node.CheckPredecessorInterval = *tcp
 	node.StabilizeInterval = *ts
@@ -45,7 +53,7 @@ func main() {
 	node.Successors = make([]chord.NodeRef, *r)
 	node.R = *r
 	node.ID = chord.Hash(*&node.Address).String()
-	node.TLSAddress = *tls
+	node.TLSAddress = fmt.Sprintf("0.0.0.0:%d", *tls)
 	node.StoragePath = "storage-" + chord.Hash(*&node.Address).String()
 	err = os.Mkdir(node.StoragePath, 0755)
 	if err != nil {

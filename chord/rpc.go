@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
+	"strings"
 )
 
 type Empty struct{}
@@ -61,13 +62,14 @@ type StoreFileReply struct {
 func (node *Node) ServeAndListen() {
 	rpc.Register(node)
 	rpc.HandleHTTP()
-	log.Println("Listening on", node.Address)
-	listener, err := net.Listen("tcp", node.Address)
+	port := node.Address[strings.Index(node.Address, ":")+1:]
+	addr := fmt.Sprintf("0.0.0.0:%s", port)
+	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	log.Printf("Listening on %s\n", node.Address)
+	log.Printf("Listening on %s\n", listener.Addr().String())
 	err = http.Serve(listener, nil)
 }
 
