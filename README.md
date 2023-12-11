@@ -3,6 +3,8 @@
 <h3>Distributed storage using Chord</h3>
 
 [Canvas instructions](https://chalmers.instructure.com/courses/26458/pages/lab-3-chord) | [Chord paper](https://people.eecs.berkeley.edu/~istoica/papers/2003/chord-ton.pdf) | [Tutorial](https://computing.utahtech.edu/cs/3410/asst_chord.html)
+
+Samuel Kajava, Daniel Rygaard, Dennis Sehic
 </div>
 
 ## General
