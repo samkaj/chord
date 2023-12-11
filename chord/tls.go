@@ -69,7 +69,7 @@ func TLSSend(nodeRef NodeRef, fileName string, data []byte) {
 	conn, err := tls.Dial("tcp", nodeRef.TLSAddress, config)
 	if err != nil {
 		fmt.Println("TLS Dial error: ", err)
-		log.Fatal(err)
+		return
 	}
 	defer conn.Close()
 
@@ -95,12 +95,6 @@ func TLSGet(nodeRef NodeRef, fileName string) ([]byte, error) {
 	}
 	defer conn.Close()
 
-	header := []byte(fileName + "\n")
-	_, err = conn.Write(header)
-	if err != nil {
-		fmt.Println("TLS Write error: ", err)
-	}
-
 	// read the file in node storage
 	file, err := os.Open(fileName)
 	if err != nil {
@@ -109,12 +103,13 @@ func TLSGet(nodeRef NodeRef, fileName string) ([]byte, error) {
 	}
 	defer file.Close()
 
-	// read the file into a byte array
+	// write the file into a byte array
 	data := make([]byte, 1024)
 	_, err = file.Read(data)
 	if err != nil {
 		fmt.Println("Failed to read file: ", err)
 		return nil, err
 	}
+
 	return data, nil
 }
