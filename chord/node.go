@@ -83,6 +83,7 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 		if err != nil {
 			return err
 		}
+
 		err = call("Node.FindSuccessor", closestPrecedingNodeReply.Node.Address, args, reply)
 		if err != nil {
 			return err
@@ -243,12 +244,30 @@ func (node *Node) Stabilize() {
 
 // Fix the finger table of a given node
 func (node *Node) FixFingers() {
+	log.Println("Fixing fingers :", node.Address)
+	log.Println("Successor: ", node.Successors[0].Address)
+	if node.Address == node.Successors[0].Address {
+		return
+	}
 	node.Next = (node.Next + 1%node.M)
 	if node.Next >= node.M {
 		node.Next = 1
 	}
 	succArgs := new(FindSuccessorArgs)
-	succArgs.Key = big.NewInt(2).Exp(big.NewInt(2), big.NewInt(int64(node.Next-1)), nil).String()
+	keyValue := big.NewInt(0)
+
+	two := big.NewInt(2)
+	exponent := big.NewInt(next - 1)
+	twoToThePower := new(big.Int).Exp(two, exponent, nil)
+
+	// Calculate n + 2^(next-1)
+	x := new(big.Int).Add(bigN, twoToThePower)
+	// set var x to n + 2^{next-1}
+
+	keyValue.Add(Hash(node.Address), big.NewInt(2).Exp(big.NewInt(2), big.NewInt(int64(node.Next-1)), nil))
+	//log.Println("node hash: ", Hash(node.Address).String())
+	//log.Println("Fixing finger: ", keyValue.String())
+	succArgs.Key = keyValue.String()
 	succReply := new(FindSuccessorReply)
 	err := call("Node.FindSuccessor", node.Address, succArgs, succReply)
 	if err != nil {
@@ -277,7 +296,7 @@ func (node *Node) GetInfo() string {
 	for i, finger := range node.FingerTable {
 		if i == 5 {
 			// don't spam the output
-			break
+
 		}
 		if finger.Address != "" {
 			info.WriteString(fmt.Sprintf("  ID: %s\n  Address: %s\n\n", Hash(finger.Address), finger.Address))
