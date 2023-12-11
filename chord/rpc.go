@@ -61,6 +61,7 @@ type StoreFileReply struct {
 func (node *Node) ServeAndListen() {
 	rpc.Register(node)
 	rpc.HandleHTTP()
+	log.Println("Listening on", node.Address)
 	listener, err := net.Listen("tcp", node.Address)
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)

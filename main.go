@@ -35,7 +35,9 @@ func main() {
 	}
 
 	node := chord.Node{}
+	log.Println("foo", *p)
 	node.Address = fmt.Sprintf("%s:%d", *a, *p)
+	log.Println("bar", node.Address)
 	node.M = 160
 	node.CheckPredecessorInterval = *tcp
 	node.StabilizeInterval = *ts
@@ -51,14 +53,13 @@ func main() {
 	}
 
 	go node.TLSListen()
-	node.CreateNode(*a)
-	j := fmt.Sprintf("%s:%d", *ja, *jp)
-	if j == "" {
-		go node.Start()
-	}
-
-	if j != "" {
+	node.CreateNode()
+	if *jp != 0 && *ja != "" {
+		j := fmt.Sprintf("%s:%d", *ja, *jp)
 		go node.Join(j)
+	} else {
+
+		go node.Start()
 	}
 
 	cli := chord.CLI{Node: &node}

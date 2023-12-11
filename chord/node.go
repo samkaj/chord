@@ -29,9 +29,8 @@ type Node struct {
 }
 
 // Create a new node with the given address
-func (node *Node) CreateNode(address string) {
+func (node *Node) CreateNode() {
 	nodeRef := new(NodeRef)
-	nodeRef.Address = address
 	nodeRef.TLSAddress = node.TLSAddress
 
 	file, err := os.ReadFile("./cert.pem")
@@ -40,7 +39,6 @@ func (node *Node) CreateNode(address string) {
 	}
 
 	nodeRef.PublicKey = file
-	node.Address = address
 	node.PublicKey = file
 	node.Successors[0] = *nodeRef
 	node.Predecessor = *&NodeRef{TLSAddress: "", Address: "", PublicKey: []byte("")}
@@ -235,10 +233,10 @@ func (node *Node) GetInfo() string {
 	}
 	info.WriteString("Fingers:\n")
 	for i, finger := range node.FingerTable {
-    if i == 5 {
-      // don't spam the output
-      break
-    }
+		if i == 5 {
+			// don't spam the output
+			break
+		}
 		if finger.Address != "" {
 			info.WriteString(fmt.Sprintf("  ID: %s\n  Address: %s\n\n", Hash(finger.Address), finger.Address))
 		}
