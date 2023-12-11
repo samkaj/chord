@@ -11,6 +11,7 @@ type CLI struct {
 	Node *Node
 }
 
+// Reads from stdin and handles commands.
 func (c *CLI) ReadCommands(node *Node) {
 	scanner := bufio.NewReader(os.Stdin)
 	for {
@@ -20,6 +21,7 @@ func (c *CLI) ReadCommands(node *Node) {
 	}
 }
 
+// Handles a command from the user in the CLI.
 func (c *CLI) handleCommand(args string) {
 	if args == "\n" {
 		return
@@ -60,10 +62,11 @@ func (c *CLI) lookup(key string) {
 		return
 	}
 
-	fmt.Fprintf(os.Stdout, c.findSuccessor(key))
+	fmt.Fprintf(os.Stdout, c.findFile(key))
 }
 
-func (c *CLI) findSuccessor(key string) string {
+// Finds the successor with a given key and returns the file information.
+func (c *CLI) findFile(key string) string {
 	reply := new(FindSuccessorReply)
 	args := new(FindSuccessorArgs)
 	args.Key = Hash(key).String()
@@ -81,6 +84,7 @@ func (c *CLI) findSuccessor(key string) string {
 	return fmt.Sprintf("ID: %s\nAddress: %s\nContent:\n%s\n", Hash(addr), addr, data)
 }
 
+// Useful test method for finding the successor of a given key
 func (c *CLI) test(key string) {
 	if key == "" {
 		fmt.Fprintf(os.Stderr, "No key supplied\n")

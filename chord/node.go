@@ -12,20 +12,20 @@ import (
 const redundancy = 3 // Number of copies by hashing the path to send it to different nodes.
 
 type Node struct {
-	ID                       string
-	Address                  string
-	Successors               []NodeRef
-	Predecessor              NodeRef
-	FingerTable              []NodeRef
-	PublicKey                []byte
-	StabilizeInterval        int
-	FixFingersInterval       int
-	CheckPredecessorInterval int
-	R                        int
-	M                        int
-	Next                     int
-	TLSAddress               string
-	StoragePath              string
+	ID                       string    // ID is the hash of the address
+	Address                  string    // Address is the IP address of the node
+	Successors               []NodeRef // Successors is a list of successors
+	Predecessor              NodeRef   // Predecessor is the predecessor of the node
+	FingerTable              []NodeRef // FingerTable is the finger table of the node
+	PublicKey                []byte    // PublicKey is the public key of the node. Used for TLS
+	StabilizeInterval        int       // StabilizeInterval is the interval at which the node stabilizes
+	FixFingersInterval       int       // FixFingersInterval is the interval at which the node fixes its finger table
+	CheckPredecessorInterval int       // CheckPredecessorInterval is the interval at which the node checks its predecessor
+	R                        int       // R is the number of successors to keep in the successor list
+	M                        int       // M is the number of entries in the finger table, matches the identifier space
+	Next                     int       // Next is the next finger to fix
+	TLSAddress               string    // TLSAddress is the address to listen for TLS connections on
+	StoragePath              string    // StoragePath is the path to the storage directory
 }
 
 // Create a new node with the given address
@@ -41,7 +41,7 @@ func (node *Node) CreateNode() {
 	nodeRef.PublicKey = file
 	node.PublicKey = file
 	node.Successors[0] = *nodeRef
-	node.Predecessor = *&NodeRef{TLSAddress: "", Address: "", PublicKey: []byte("")}
+	node.Predecessor = NodeRef{TLSAddress: "", Address: "", PublicKey: []byte("")}
 	node.FingerTable = make([]NodeRef, node.M)
 }
 
@@ -98,36 +98,6 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 	return nil
 }
 
-// Find the successor of a given key
-func (node *Node) FindSuccessor2(args *FindSuccessorArgs, reply *FindSuccessorReply) error {
-
-	num := new(big.Int)
-	num.SetString(args.Key, 10)
-	log.Println(Hash(node.Address), "<= ", num.String(), "<=", Hash(node.Successors[0].Address))
-
-	if between(Hash(node.Address), num, Hash(node.Successors[0].Address), true) {
-		reply.Successor = node.Successors[0]
-		log.Println("Find Successor result: ", node.Successors[0])
-		return nil
-	} else {
-		closestPrecedingNodeArgs := new(ClosestPrecedingNodeArgs)
-		closestPrecedingNodeArgs.Key = num.String()
-		closestPrecedingNodeReply := new(ClosestPrecedingNodeReply)
-		err := call("Node.ClosestPrecedingNode2", node.Address, closestPrecedingNodeArgs, closestPrecedingNodeReply)
-		if err != nil {
-			return err
-		}
-
-		err = call("Node.FindSuccessor2", closestPrecedingNodeReply.Node.Address, args, reply)
-		if err != nil {
-			return err
-		}
-		log.Println("Find Successor result: ", closestPrecedingNodeReply.Node)
-
-	}
-	return nil
-}
-
 // Notify a node that it may be its predecessor
 func (node *Node) Notify(args *NotifyArgs, reply *Empty) error {
 	if node.Predecessor.Address == "" || between(Hash(node.Predecessor.Address), Hash(args.Key.Address), Hash(node.Address), false) {
@@ -136,11 +106,13 @@ func (node *Node) Notify(args *NotifyArgs, reply *Empty) error {
 	return nil
 }
 
+// Used to let someone inherit their successors successor list
 func (node *Node) GetSuccessorList(args *GetSuccessorlistArgs, reply *GetSuccessorlistReply) error {
 	reply.Successors = node.Successors
 	return nil
 }
 
+// Get highest predecessor to a node in finger table
 func (node *Node) ClosestPrecedingNode(args *ClosestPrecedingNodeArgs, reply *ClosestPrecedingNodeReply) error {
 	num := new(big.Int)
 	num.SetString(args.Key, 10)
@@ -151,28 +123,11 @@ func (node *Node) ClosestPrecedingNode(args *ClosestPrecedingNodeArgs, reply *Cl
 		}
 	}
 	reply.Node = NodeRef{Address: node.Address, PublicKey: node.PublicKey, TLSAddress: node.TLSAddress}
-	//reply.Node = node.Successors[0]
-	return nil
-}
-
-func (node *Node) ClosestPrecedingNode2(args *ClosestPrecedingNodeArgs, reply *ClosestPrecedingNodeReply) error {
-	num := new(big.Int)
-	num.SetString(args.Key, 10)
-	log.Println("Closest preceding node num: ", num.String())
-	for i := node.M - 1; i > 0; i-- {
-		if node.FingerTable[i].Address != "" && between(Hash(node.Address), Hash(node.FingerTable[i].Address), num, false) {
-			reply.Node = node.FingerTable[i]
-			log.Println("Closest preceding node return: ", reply.Node.Address)
-			return nil
-		}
-	}
-	reply.Node = NodeRef{Address: node.Address, PublicKey: node.PublicKey, TLSAddress: node.TLSAddress}
-	//reply.Node = node.Successors[0]
-	log.Println("Closest preceding node: ", reply.Node.Address)
 	return nil
 }
 
 // Stores a file in the ring by finding the correct succesor and then using TLSSend to send the file to the successor.
+// We use redundancy to store the file on multiple nodes. This is done by hashing multiple times.
 func (node *Node) Store(path string, data []byte) error {
 	hashedPath := path
 	for i := 0; i < redundancy; i++ {
@@ -183,21 +138,19 @@ func (node *Node) Store(path string, data []byte) error {
 			for j := 0; j < i; j++ {
 				hashedPath = Hash(hashedPath).String()
 			}
-			fmt.Println("Hashed path: ", hashedPath)
 		}
 		succArgs.Key = hashedPath
-		fmt.Println("Finding successor for: ", succArgs.Key)
 		succReply := new(FindSuccessorReply)
 		err := call("Node.FindSuccessor", node.Address, succArgs, succReply)
 		if err != nil {
 			return fmt.Errorf("failed to find successor: %w", err)
 		}
-		fmt.Println("Storing file at: ", succReply.Successor.Address)
 		TLSSend(succReply.Successor, path, data)
 	}
 	return nil
 }
 
+// Get a file from the ring. Since we are using redundancy, we can just get the file from the first node that has it.
 func (node *Node) GetFile(path string) ([]byte, error) {
 	for i := 0; i < redundancy; i++ {
 		succArgs := new(FindSuccessorArgs)
@@ -219,8 +172,9 @@ func (node *Node) GetFile(path string) ([]byte, error) {
 	return nil, fmt.Errorf("failed to get file")
 }
 
-// Stabilize the ring
+// Verifies the immediate successor and tells the successor about this node
 func (node *Node) Stabilize() {
+	// Get predecessor of our successor
 	x := new(GetPredecessorReply)
 	x.Predecessor = node.Predecessor
 	if node.Successors[0].Address != node.Address {
@@ -228,28 +182,32 @@ func (node *Node) Stabilize() {
 		call("Node.GetPredecessor", node.Successors[0].Address, &Empty{}, x)
 	}
 
+	// If x is between this node and its successor, set successor to x
 	if x.Predecessor.Address != "" && between(Hash(node.Address), Hash(x.Predecessor.Address), Hash(node.Successors[0].Address), false) {
 		node.Successors[0] = x.Predecessor
+	}
+
+	// Ad-hoc fix for when the successor list is empty
+	if node.Successors[0].Address == node.Address {
+		return
 	}
 
 	notifyArgs := new(NotifyArgs)
 	notifyArgs.Key = *&NodeRef{Address: node.Address, PublicKey: node.PublicKey, TLSAddress: node.TLSAddress}
 	notifyReply := new(NotifyReply)
-
-	if node.Successors[0].Address == node.Address {
-		return
-	}
-
 	err := call("Node.Notify", node.Successors[0].Address, notifyArgs, notifyReply)
 	if err != nil {
+		// If the successor is down, remove it from the successor list
 		node.Successors = node.Successors[1:]
 	}
 
+	// Set ourselves as successor if the successor list is empty
 	if len(node.Successors) == 0 {
 		temp := *&NodeRef{TLSAddress: node.TLSAddress, Address: node.Address, PublicKey: node.PublicKey}
 		node.Successors = append(node.Successors, temp)
 	}
 
+	// Get successors from our successor
 	getSuccessorlistArgs := new(GetSuccessorlistArgs)
 	getSuccessorlistReply := new(GetSuccessorlistReply)
 	err = call("Node.GetSuccessorList", node.Successors[0].Address, getSuccessorlistArgs, getSuccessorlistReply)
@@ -261,31 +219,26 @@ func (node *Node) Stabilize() {
 	if len(getSuccessorlistReply.Successors) >= node.R {
 		successorlistReply = successorlistReply[:node.R-1]
 	}
+
+	// Append our successor to the successor list
 	node.Successors = append([]NodeRef{node.Successors[0]}, successorlistReply...)
 }
 
 // Fix the finger table of a given node
 func (node *Node) FixFingers() {
-	if node.Address == node.Successors[0].Address {
-		return
-	}
 	node.Next = (node.Next + 1%node.M)
 	if node.Next >= node.M {
+		// Stay in bounds
 		node.Next = 1
 	}
 	succArgs := new(FindSuccessorArgs)
 
+	// From paper: n + 2^(next-1)
 	bigN := Hash(node.Address)
 	two := big.NewInt(2)
 	exponent := big.NewInt(int64(node.Next - 1))
 	twoToThePower := new(big.Int).Exp(two, exponent, nil)
-
-	// Calculate n + 2^(next-1)
 	x := new(big.Int).Add(bigN, twoToThePower)
-	// set var x to n + 2^{next-1}
-
-	//log.Println("node hash: ", Hash(node.Address).String())
-	//log.Println("Fixing finger: ", keyValue.String())
 	succArgs.Key = x.String()
 	succReply := new(FindSuccessorReply)
 	err := call("Node.FindSuccessor", node.Address, succArgs, succReply)
@@ -303,6 +256,7 @@ func (node *Node) CheckPredecessor() {
 	}
 }
 
+// Prints
 func (node *Node) GetInfo() string {
 	var info strings.Builder
 	info.WriteString("Node:\n")
@@ -312,11 +266,7 @@ func (node *Node) GetInfo() string {
 		info.WriteString(fmt.Sprintf("  ID: %s\n  Address: %s\n\n", Hash(s.Address), s.Address))
 	}
 	info.WriteString("Fingers:\n")
-	for i, finger := range node.FingerTable {
-		if i == 5 {
-			// don't spam the output
-
-		}
+	for _, finger := range node.FingerTable {
 		if finger.Address != "" {
 			info.WriteString(fmt.Sprintf("  ID: %s\n  Address: %s\n\n", Hash(finger.Address), finger.Address))
 		}
@@ -324,10 +274,12 @@ func (node *Node) GetInfo() string {
 	return info.String()
 }
 
+// Ping function for checking if a node is alive
 func (node *Node) Ping(args *Empty, reply *Empty) error {
 	return nil
 }
 
+// Get the predecessor of a node
 func (node *Node) GetPredecessor(args *Empty, reply *GetPredecessorReply) error {
 	reply.Predecessor = node.Predecessor
 	return nil

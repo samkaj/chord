@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// Establishes a secure channel for sending files between nodes using TLS.
 func (node *Node) TLSListen() {
 	cer, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
 	if err != nil {
@@ -35,6 +36,7 @@ func (node *Node) TLSListen() {
 	}
 }
 
+// Reads from the connection and writes the file to the node's storage.
 func (node *Node) handleConnection(conn net.Conn) {
 	defer conn.Close()
 	buffer := make([]byte, 1024)
@@ -59,6 +61,7 @@ func (node *Node) handleConnection(conn net.Conn) {
 	}
 }
 
+// Sends data file data to a node using TLS.
 func TLSSend(nodeRef NodeRef, fileName string, data []byte) {
 	cer, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
 
@@ -81,6 +84,7 @@ func TLSSend(nodeRef NodeRef, fileName string, data []byte) {
 	}
 }
 
+// Gets a file from a node using TLS.
 func TLSGet(nodeRef NodeRef, fileName string) ([]byte, error) {
 	cer, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
 
