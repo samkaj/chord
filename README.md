@@ -1,23 +1,29 @@
 # Test commands
 
+**Build**
+```bash
+go build -o build/chord
+```
+
+
 **Create Ring**
 ```bash
-./chord.sh -a localhost -p 8080 -tcp 1000 -ff 1000 -ts 100 -r 3 -tls 127.0.0.1:8081
+build/chord -a localhost -p 8080 -tcp 1000 -ff 1000 -ts 100 -r 3 -tls 127.0.0.1:8081
 ```
 
 **Join Ring 1**
 ```bash
-./chord.sh -a localhost -p 2020 -ja localhost -jp 8080 -tcp 1000 -ff 1000 -ts 100 -r 3 -tls 127.0.0.1:2021
+build/chord -a localhost -p 2020 -ja localhost -jp 8080 -tcp 1000 -ff 1000 -ts 100 -r 3 -tls 127.0.0.1:2021
 ```
 
 **Join ring 2**
 ```bash
-./chord.sh -a localhost -p 3030 -ja localhost -jp 8080 -tcp 1000 -ff 1000 -ts 100 -r 3 -tls 127.0.0.1:3031
+build/chord -a localhost -p 3030 -ja localhost -jp 8080 -tcp 1000 -ff 1000 -ts 100 -r 3 -tls 127.0.0.1:3031
 ```
 
 **Join ring 3**
 ```bash
-./chord.sh -a localhost -p 4040 -ja localhost -jp 8080 -tcp 1000 -ff 1000 -ts 100 -r 3 -tls 127.0.0.1:4041
+build/chord -a localhost -p 4040 -ja localhost -jp 8080 -tcp 1000 -ff 1000 -ts 100 -r 3 -tls 127.0.0.1:4041
 ```
 
 # Creating SSL certificate
