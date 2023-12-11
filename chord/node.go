@@ -76,24 +76,51 @@ func (node *Node) Join(address string) {
 // Find the successor of a given key
 func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorReply) error {
 	if between(Hash(node.Address), Hash(args.Key), Hash(node.Successors[0].Address), true) {
-
 		reply.Successor = node.Successors[0]
 	} else {
 		closestPrecedingNodeArgs := new(ClosestPrecedingNodeArgs)
 		closestPrecedingNodeArgs.Key = args.Key
 		closestPrecedingNodeReply := new(ClosestPrecedingNodeReply)
-		err := call("Node.ClosestPrecedingNode", node.Address, closestPrecedingNodeArgs, closestPrecedingNodeReply)
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = call("Node.FindSuccessor", closestPrecedingNodeReply.Node.Address, args, reply)
-		if err != nil {
-			log.Fatal(err)
+		for {
+			err := call("Node.ClosestPrecedingNode", node.Address, closestPrecedingNodeArgs, closestPrecedingNodeReply)
+			if err != nil {
+				log.Fatal(err)
+			}
+			err = call("Node.FindSuccessor", closestPrecedingNodeReply.Node.Address, args, reply)
+			if err != nil {
+				log.Printf("Failed to call successor: %v\n, removing", closestPrecedingNodeReply.Node.Address)
+				node.DisconnectNode(closestPrecedingNodeReply.Node.Address)
+				continue
+			}
+			break
 		}
 
 		reply.Successor = closestPrecedingNodeReply.Node
 	}
 	return nil
+}
+
+func (node *Node) DisconnectNode(address string) {
+	node.RemoveFromFingerTable(address)
+	node.RemoveFromSuccessors(address)
+	//filename := node.StoragePath + "/backups/"
+
+}
+
+func (node *Node) RemoveFromFingerTable(address string) {
+	for i, finger := range node.FingerTable {
+		if finger.Address == address {
+			node.FingerTable[i] = NodeRef{}
+		}
+	}
+}
+
+func (node *Node) RemoveFromSuccessors(address string) {
+	for i, successor := range node.Successors {
+		if successor.Address == address {
+			node.Successors = append(node.Successors[:i], node.Successors[i+1:]...)
+		}
+	}
 }
 
 // Notify a node that it may be its predecessor
@@ -130,7 +157,7 @@ func (node *Node) Store(path string, data []byte) error {
 		return fmt.Errorf("failed to find successor: %w", err)
 	}
 
-	TLSSend(succReply.Successor, path, data)
+	TLSSend(node, succReply.Successor, path, data)
 	return nil
 }
 
@@ -178,6 +205,33 @@ func (node *Node) Stabilize() {
 	}
 
 	node.Successors = append([]NodeRef{node.Successors[0]}, successorlistReply...)
+
+	files, err := os.ReadDir(node.StoragePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if node.Predecessor.Address == node.Address {
+		return
+	}
+
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		fileName := file.Name()
+		pHash := Hash(node.Predecessor.Address)
+		fHash := Hash(fileName)
+
+		if pHash.Cmp(fHash) == 1 {
+			data, err := os.ReadFile(node.StoragePath + "/" + fileName)
+			if err != nil {
+				log.Fatal(err)
+			}
+			node.Store(fileName, data)
+			os.Remove(node.StoragePath + "/" + fileName)
+		}
+	}
 }
 
 // Fix the finger table of a given node
@@ -186,9 +240,10 @@ func (node *Node) FixFingers() {
 	if node.Next > node.M {
 		node.Next = 1
 	}
-	log.Println("Fixing finger: ", node.Next)
+	//log.Println("Fixing finger: ", node.Next)
 	succArgs := new(FindSuccessorArgs)
 	succArgs.Key = big.NewInt(2).Exp(big.NewInt(2), big.NewInt(int64(node.Next-1)), nil).String()
+	//log.Println(succArgs.Key)
 	succReply := new(FindSuccessorReply)
 	err := call("Node.FindSuccessor", node.Address, succArgs, succReply)
 	if err != nil {
