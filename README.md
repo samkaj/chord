@@ -1,4 +1,15 @@
-# Test commands
+<div align="center">
+<h1>Laboration 3</h1>
+<h3>Distributed storage using Chord</h3>
+
+[Canvas instructions](https://chalmers.instructure.com/courses/26458/pages/lab-3-chord) | [Chord paper](https://people.eecs.berkeley.edu/~istoica/papers/2003/chord-ton.pdf) | [Tutorial](https://computing.utahtech.edu/cs/3410/asst_chord.html)
+</div>
+
+## General
+
+We use TLS for securely transferring files, and you therefore need to generate a key and a certificate to be able to run the application, see [Creating SSL certificate](#creating-ssl-certificate).
+
+## Test commands
 
 **Build**
 
@@ -30,7 +41,7 @@ build/chord -a 0.0.0.0 -p 3030 -ja 0.0.0.0 -jp 8080 -tcp 1000 -ff 1000 -ts 100 -
 build/chord -a 0.0.0.0 -p 4040 -ja 0.0.0.0 -jp 8080 -tcp 1000 -ff 1000 -ts 100 -r 3 -tls 4041
 ```
 
-# Creating SSL certificate
+## Creating SSL certificate
 
 Run the following command in the root of the project
 
