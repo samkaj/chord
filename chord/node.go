@@ -129,25 +129,27 @@ func (node *Node) GetSuccessorList(args *GetSuccessorlistArgs, reply *GetSuccess
 }
 
 func (node *Node) ClosestPrecedingNode(args *ClosestPrecedingNodeArgs, reply *ClosestPrecedingNodeReply) error {
-	for i := node.M - 1; i > 0; i-- {
-		if node.FingerTable[i].Address != "" && between(Hash(node.Address), Hash(node.FingerTable[i].Address), Hash(args.Key), false) {
-			reply.Node = node.FingerTable[i]
-			return nil
-		}
-	}
-	reply.Node = NodeRef{Address: node.Address, PublicKey: node.PublicKey, TLSAddress: node.TLSAddress}
+	//for i := node.M - 1; i > 0; i-- {
+	//	if node.FingerTable[i].Address != "" && between(Hash(node.Address), Hash(node.FingerTable[i].Address), Hash(args.Key), false) {
+	//		reply.Node = node.FingerTable[i]
+	//		return nil
+	//	}
+	//}
+	// reply.Node = NodeRef{Address: node.Address, PublicKey: node.PublicKey, TLSAddress: node.TLSAddress}
+	reply.Node = node.Successors[0]
 	return nil
 }
 
 func (node *Node) ClosestPrecedingNode2(args *ClosestPrecedingNodeArgs, reply *ClosestPrecedingNodeReply) error {
-	for i := node.M - 1; i > 0; i-- {
-		log.Println(Hash(node.Address), "<= ", Hash(node.FingerTable[i].Address), "<=", Hash(args.Key))
-		if node.FingerTable[i].Address != "" && between(Hash(node.Address), Hash(node.FingerTable[i].Address), Hash(args.Key), false) {
-			reply.Node = node.FingerTable[i]
-			return nil
-		}
-	}
-	reply.Node = NodeRef{Address: node.Address, PublicKey: node.PublicKey, TLSAddress: node.TLSAddress}
+	//for i := node.M - 1; i > 0; i-- {
+	//	log.Println(Hash(node.Address), "<= ", Hash(node.FingerTable[i].Address), "<=", Hash(args.Key))
+	//	if node.FingerTable[i].Address != "" && between(Hash(node.Address), Hash(node.FingerTable[i].Address), Hash(args.Key), false) {
+	//		reply.Node = node.FingerTable[i]
+	//		return nil
+	//	}
+	//}
+	reply.Node = node.Successors[0]
+	//reply.Node = NodeRef{Address: node.Address, PublicKey: node.PublicKey, TLSAddress: node.TLSAddress}
 	return nil
 }
 
