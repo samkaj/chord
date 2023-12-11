@@ -9,8 +9,7 @@ import (
 	"time"
 )
 
-const null = ""
-const redundancy = 3
+const redundancy = 3 // Number of copies by hashing the path to send it to different nodes.
 
 type Node struct {
 	ID                       string
@@ -44,7 +43,7 @@ func (node *Node) CreateNode(address string) {
 	node.Address = address
 	node.PublicKey = file
 	node.Successors[0] = *nodeRef
-	node.Predecessor = *&NodeRef{TLSAddress: null, Address: null, PublicKey: []byte(null)}
+	node.Predecessor = *&NodeRef{TLSAddress: "", Address: "", PublicKey: []byte("")}
 	node.FingerTable = make([]NodeRef, node.M)
 }
 
@@ -77,7 +76,6 @@ func (node *Node) Join(address string) {
 // Find the successor of a given key
 func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorReply) error {
 	if between(Hash(node.Address), Hash(args.Key), Hash(node.Successors[0].Address), true) {
-
 		reply.Successor = node.Successors[0]
 	} else {
 		closestPrecedingNodeArgs := new(ClosestPrecedingNodeArgs)
@@ -85,13 +83,12 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 		closestPrecedingNodeReply := new(ClosestPrecedingNodeReply)
 		err := call("Node.ClosestPrecedingNode", node.Address, closestPrecedingNodeArgs, closestPrecedingNodeReply)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		err = call("Node.FindSuccessor", closestPrecedingNodeReply.Node.Address, args, reply)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-
 		reply.Successor = closestPrecedingNodeReply.Node
 	}
 	return nil
@@ -206,7 +203,7 @@ func (node *Node) Stabilize() {
 // Fix the finger table of a given node
 func (node *Node) FixFingers() {
 	node.Next = (node.Next + 1%node.M)
-	if node.Next > node.M {
+	if node.Next >= node.M {
 		node.Next = 1
 	}
 	log.Println("Fixing finger: ", node.Next)
