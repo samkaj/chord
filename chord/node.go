@@ -234,7 +234,11 @@ func (node *Node) GetInfo() string {
 		info.WriteString(fmt.Sprintf("  ID: %s\n  Address: %s\n\n", Hash(s.Address), s.Address))
 	}
 	info.WriteString("Fingers:\n")
-	for _, finger := range node.FingerTable {
+	for i, finger := range node.FingerTable {
+    if i == 5 {
+      // don't spam the output
+      break
+    }
 		if finger.Address != "" {
 			info.WriteString(fmt.Sprintf("  ID: %s\n  Address: %s\n\n", Hash(finger.Address), finger.Address))
 		}

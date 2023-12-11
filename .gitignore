@@ -1,5 +1,6 @@
 build
-log.txt
+*.txt
 cert.pem
 key.pem
 storage-*
+.DS_Store
