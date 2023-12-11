@@ -2,22 +2,22 @@
 
 **Create Ring**
 ```bash
-./chord.sh -a 0.0.0.0:3000 -tcp 5000 -ts 5000 -ff 5000 -r 4 -tls localhost:3100
+./chord.sh -a localhost -p 8080 -tcp 1000 -ff 1000 -ts 100 -r 3 -tls 127.0.0.1:8081
 ```
 
 **Join Ring 1**
 ```bash
-./chord.sh -a 0.0.0.0:3001 -j 0.0.0.0:3000 -tcp 5000 -ts 5000 -ff 5000 -r 4 -tls localhost:3101
+./chord.sh -a localhost -p 2020 -ja localhost -jp 8080 -tcp 1000 -ff 1000 -ts 100 -r 3 -tls 127.0.0.1:2021
 ```
 
 **Join ring 2**
 ```bash
-./chord.sh -a 0.0.0.0:3002 -j 0.0.0.0:3000 -tcp 5000 -ts 5000 -ff 5000 -r 4 -tls localhost:3102
+./chord.sh -a localhost -p 3030 -ja localhost -jp 8080 -tcp 1000 -ff 1000 -ts 100 -r 3 -tls 127.0.0.1:3031
 ```
 
 **Join ring 3**
 ```bash
-./chord.sh -a 0.0.0.0:3003 -j 0.0.0.0:3000 -tcp 5000 -ts 5000 -ff 5000 -r 4 -tls localhost:3103
+./chord.sh -a localhost -p 4040 -ja localhost -jp 8080 -tcp 1000 -ff 1000 -ts 100 -r 3 -tls 127.0.0.1:4041
 ```
 
 # Creating SSL certificate
