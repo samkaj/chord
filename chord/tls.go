@@ -94,7 +94,7 @@ func TLSGet(nodeRef NodeRef, fileName string) ([]byte, error) {
 
 	conn, err := tls.Dial("tcp", nodeRef.TLSAddress, config)
 	if err != nil {
-		fmt.Println("TLS Dial error: ", err)
+		fmt.Printf("TLS Dial to %s failed with error: %v\n", nodeRef.TLSAddress, err)
 		return nil, err
 	}
 	defer conn.Close()
@@ -102,7 +102,7 @@ func TLSGet(nodeRef NodeRef, fileName string) ([]byte, error) {
 	// read the file in node storage
 	file, err := os.Open(fileName)
 	if err != nil {
-		fmt.Println("Failed to open file: ", err)
+		fmt.Printf("Failed to open file: %v\n", err)
 		return nil, err
 	}
 	defer file.Close()
@@ -111,7 +111,7 @@ func TLSGet(nodeRef NodeRef, fileName string) ([]byte, error) {
 	data := make([]byte, 1024)
 	_, err = file.Read(data)
 	if err != nil {
-		fmt.Println("Failed to read file: ", err)
+		fmt.Printf("Failed to read file: %v\n", err)
 		return nil, err
 	}
 

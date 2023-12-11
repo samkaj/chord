@@ -169,7 +169,7 @@ func (node *Node) GetFile(path string) ([]byte, error) {
 			return data, nil
 		}
 	}
-	return nil, fmt.Errorf("failed to get file")
+	return nil, fmt.Errorf("failed to get file\n")
 }
 
 // Verifies the immediate successor and tells the successor about this node

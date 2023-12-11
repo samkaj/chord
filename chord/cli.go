@@ -73,13 +73,13 @@ func (c *CLI) findFile(key string) string {
 
 	err := call("Node.FindSuccessor", c.Node.Address, args, reply)
 	if err != nil {
-		return "Failed to find successor"
+		return "Failed to find successor\n"
 	}
 
 	addr := reply.Successor.Address
 	data, err := TLSGet(reply.Successor, key)
 	if err != nil {
-		return "Failed to get file"
+		return "Failed to get file\n"
 	}
 	return fmt.Sprintf("ID: %s\nAddress: %s\nContent:\n%s\n", Hash(addr), addr, data)
 }

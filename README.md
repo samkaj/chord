@@ -46,7 +46,7 @@ Example:
 
 ```bash
 openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
-    -subj "/CN=your-server-common-name" \
+    -subj "/CN=chord-server" \
     -addext "subjectAltName = IP:0.0.0.0" \
     -keyout key.pem -out cert.pem
 
