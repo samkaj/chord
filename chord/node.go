@@ -190,11 +190,11 @@ func (node *Node) Stabilize() {
 	if err != nil {
 		return
 	}
-	var successorlistReply []NodeRef
-	if len(getSuccessorlistReply.Successors) >= node.R {
-		successorlistReply = getSuccessorlistReply.Successors[:node.R-1]
-	}
 
+	successorlistReply := getSuccessorlistReply.Successors
+	if len(getSuccessorlistReply.Successors) >= node.R {
+		successorlistReply = successorlistReply[:node.R-1]
+	}
 	node.Successors = append([]NodeRef{node.Successors[0]}, successorlistReply...)
 }
 
