@@ -80,3 +80,41 @@ func TLSSend(nodeRef NodeRef, fileName string, data []byte) {
 		fmt.Println("TLS Write error: ", err)
 	}
 }
+
+func TLSGet(nodeRef NodeRef, fileName string) ([]byte, error) {
+	cer, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
+
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(nodeRef.PublicKey)
+	config := &tls.Config{Certificates: []tls.Certificate{cer}, RootCAs: caCertPool}
+
+	conn, err := tls.Dial("tcp", nodeRef.TLSAddress, config)
+	if err != nil {
+		fmt.Println("TLS Dial error: ", err)
+		return nil, err
+	}
+	defer conn.Close()
+
+	header := []byte(fileName + "\n")
+	_, err = conn.Write(header)
+	if err != nil {
+		fmt.Println("TLS Write error: ", err)
+	}
+
+	// read the file in node storage
+	file, err := os.Open(fileName)
+	if err != nil {
+		fmt.Println("Failed to open file: ", err)
+		return nil, err
+	}
+	defer file.Close()
+
+	// read the file into a byte array
+	data := make([]byte, 1024)
+	_, err = file.Read(data)
+	if err != nil {
+		fmt.Println("Failed to read file: ", err)
+		return nil, err
+	}
+	return data, nil
+}

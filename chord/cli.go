@@ -71,7 +71,11 @@ func (c *CLI) findSuccessor(key string) string {
 	}
 
 	addr := reply.Successor.Address
-	return fmt.Sprintf("ID: %s\nAddress: %s\n", Hash(addr), addr)
+	data, err := TLSGet(reply.Successor, key)
+	if err != nil {
+		return "Failed to get file"
+	}
+	return fmt.Sprintf("ID: %s\nAddress: %s\nContent:\n%s\n", Hash(addr), addr, data)
 }
 
 // Takes the location of a file on a local disk, then performs a lookup.

@@ -10,6 +10,7 @@ import (
 )
 
 const null = ""
+const redundancy = 3
 
 type Node struct {
 	ID                       string
@@ -122,16 +123,38 @@ func (node *Node) ClosestPrecedingNode(args *ClosestPrecedingNodeArgs, reply *Cl
 
 // Stores a file in the ring by finding the correct succesor and then using TLSSend to send the file to the successor.
 func (node *Node) Store(path string, data []byte) error {
-	succArgs := new(FindSuccessorArgs)
-	succArgs.Key = path
-	succReply := new(FindSuccessorReply)
-	err := call("Node.FindSuccessor", node.Address, succArgs, succReply)
-	if err != nil {
-		return fmt.Errorf("failed to find successor: %w", err)
+	for i := 0; i < redundancy; i++ {
+		succArgs := new(FindSuccessorArgs)
+		succArgs.Key = path
+		succReply := new(FindSuccessorReply)
+		err := call("Node.FindSuccessor", node.Address, succArgs, succReply)
+		if err != nil {
+			return fmt.Errorf("failed to find successor: %w", err)
+		}
+		TLSSend(succReply.Successor, path, data)
 	}
-
-	TLSSend(succReply.Successor, path, data)
 	return nil
+}
+
+func (node *Node) GetFile(path string) ([]byte, error) {
+	for i := 0; i < redundancy; i++ {
+		succArgs := new(FindSuccessorArgs)
+		if i == 0 {
+			succArgs.Key = path
+		} else {
+			succArgs.Key = Hash(path).String()
+		}
+		succReply := new(FindSuccessorReply)
+		err := call("Node.FindSuccessor", node.Address, succArgs, succReply)
+		if err != nil {
+			return nil, fmt.Errorf("failed to find successor: %w", err)
+		}
+		data, err := TLSGet(succReply.Successor, path)
+		if err == nil {
+			return data, nil
+		}
+	}
+	return nil, fmt.Errorf("failed to get file")
 }
 
 // Stabilize the ring
