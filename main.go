@@ -46,7 +46,7 @@ func main() {
 	node.R = *r
 	node.ID = chord.Hash(*a).String()
 	node.TLSAddress = *tls
-	node.StoragePath = "storage-" + chord.Hash(*a).String()
+	node.StoragePath = "storage-" + chord.Hash(*&node.Address).String()
 	err = os.Mkdir(node.StoragePath, 0755)
 	if err != nil {
 		log.Println("Failed to create storage directory: ", err)
