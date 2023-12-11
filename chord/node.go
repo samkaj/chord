@@ -77,12 +77,13 @@ func bytesToBigInt(b []byte) *big.Int {
 
 // Find the successor of a given key
 func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorReply) error {
-
-	if between(Hash(node.Address), bytesToBigInt([]byte(args.Key)), Hash(node.Successors[0].Address), true) {
+	num := new(big.Int)
+	num.SetString(args.Key, 10)
+	if between(Hash(node.Address), num, Hash(node.Successors[0].Address), true) {
 		reply.Successor = node.Successors[0]
 	} else {
 		closestPrecedingNodeArgs := new(ClosestPrecedingNodeArgs)
-		closestPrecedingNodeArgs.Key = args.Key
+		closestPrecedingNodeArgs.Key = num.String()
 		closestPrecedingNodeReply := new(ClosestPrecedingNodeReply)
 		err := call("Node.ClosestPrecedingNode", node.Address, closestPrecedingNodeArgs, closestPrecedingNodeReply)
 		if err != nil {
@@ -93,30 +94,37 @@ func (node *Node) FindSuccessor(args *FindSuccessorArgs, reply *FindSuccessorRep
 		if err != nil {
 			return err
 		}
-		reply.Successor = closestPrecedingNodeReply.Node
 	}
 	return nil
 }
 
+// Find the successor of a given key
 func (node *Node) FindSuccessor2(args *FindSuccessorArgs, reply *FindSuccessorReply) error {
-	log.Println(Hash(node.Address), "<= ", Hash(args.Key), "<=", Hash(node.Successors[0].Address))
-	if between(Hash(node.Address), Hash(args.Key), Hash(node.Successors[0].Address), true) {
+
+	num := new(big.Int)
+	num.SetString(args.Key, 10)
+	log.Println(Hash(node.Address), "<= ", num.String(), "<=", Hash(node.Successors[0].Address))
+
+	if between(Hash(node.Address), num, Hash(node.Successors[0].Address), true) {
 		reply.Successor = node.Successors[0]
+		log.Println("Find Successor result: ", node.Successors[0])
+		return nil
 	} else {
 		closestPrecedingNodeArgs := new(ClosestPrecedingNodeArgs)
-		closestPrecedingNodeArgs.Key = args.Key
+		closestPrecedingNodeArgs.Key = num.String()
 		closestPrecedingNodeReply := new(ClosestPrecedingNodeReply)
 		err := call("Node.ClosestPrecedingNode2", node.Address, closestPrecedingNodeArgs, closestPrecedingNodeReply)
 		if err != nil {
 			return err
 		}
+
 		err = call("Node.FindSuccessor2", closestPrecedingNodeReply.Node.Address, args, reply)
 		if err != nil {
 			return err
 		}
-		reply.Successor = closestPrecedingNodeReply.Node
+		log.Println("Find Successor result: ", closestPrecedingNodeReply.Node)
+
 	}
-	log.Println("Result Successor: ", reply.Successor.Address)
 	return nil
 }
 
@@ -134,27 +142,33 @@ func (node *Node) GetSuccessorList(args *GetSuccessorlistArgs, reply *GetSuccess
 }
 
 func (node *Node) ClosestPrecedingNode(args *ClosestPrecedingNodeArgs, reply *ClosestPrecedingNodeReply) error {
-	//for i := node.M - 1; i > 0; i-- {
-	//	if node.FingerTable[i].Address != "" && between(Hash(node.Address), Hash(node.FingerTable[i].Address), Hash(args.Key), false) {
-	//		reply.Node = node.FingerTable[i]
-	//		return nil
-	//	}
-	//}
+	num := new(big.Int)
+	num.SetString(args.Key, 10)
+	for i := node.M - 1; i > 0; i-- {
+		if node.FingerTable[i].Address != "" && between(Hash(node.Address), Hash(node.FingerTable[i].Address), num, false) {
+			reply.Node = node.FingerTable[i]
+			return nil
+		}
+	}
 	reply.Node = NodeRef{Address: node.Address, PublicKey: node.PublicKey, TLSAddress: node.TLSAddress}
 	//reply.Node = node.Successors[0]
 	return nil
 }
 
 func (node *Node) ClosestPrecedingNode2(args *ClosestPrecedingNodeArgs, reply *ClosestPrecedingNodeReply) error {
-	//for i := node.M - 1; i > 0; i-- {
-	//	log.Println(Hash(node.Address), "<= ", Hash(node.FingerTable[i].Address), "<=", Hash(args.Key))
-	//	if node.FingerTable[i].Address != "" && between(Hash(node.Address), Hash(node.FingerTable[i].Address), Hash(args.Key), false) {
-	//		reply.Node = node.FingerTable[i]
-	//		return nil
-	//	}
-	//}
-	//reply.Node = node.Successors[0]
+	num := new(big.Int)
+	num.SetString(args.Key, 10)
+	log.Println("Closest preceding node num: ", num.String())
+	for i := node.M - 1; i > 0; i-- {
+		if node.FingerTable[i].Address != "" && between(Hash(node.Address), Hash(node.FingerTable[i].Address), num, false) {
+			reply.Node = node.FingerTable[i]
+			log.Println("Closest preceding node return: ", reply.Node.Address)
+			return nil
+		}
+	}
 	reply.Node = NodeRef{Address: node.Address, PublicKey: node.PublicKey, TLSAddress: node.TLSAddress}
+	//reply.Node = node.Successors[0]
+	log.Println("Closest preceding node: ", reply.Node.Address)
 	return nil
 }
 
@@ -252,8 +266,6 @@ func (node *Node) Stabilize() {
 
 // Fix the finger table of a given node
 func (node *Node) FixFingers() {
-	log.Println("Fixing fingers :", node.Address)
-	log.Println("Successor: ", node.Successors[0].Address)
 	if node.Address == node.Successors[0].Address {
 		return
 	}

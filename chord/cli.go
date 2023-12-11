@@ -59,13 +59,14 @@ func (c *CLI) lookup(key string) {
 		fmt.Fprintf(os.Stderr, "No key supplied\n")
 		return
 	}
+
 	fmt.Fprintf(os.Stdout, c.findSuccessor(key))
 }
 
 func (c *CLI) findSuccessor(key string) string {
 	reply := new(FindSuccessorReply)
 	args := new(FindSuccessorArgs)
-	args.Key = key
+	args.Key = Hash(key).String()
 
 	err := call("Node.FindSuccessor", c.Node.Address, args, reply)
 	if err != nil {
@@ -87,7 +88,7 @@ func (c *CLI) test(key string) {
 	}
 	reply := new(FindSuccessorReply)
 	args := new(FindSuccessorArgs)
-	args.Key = key
+	args.Key = Hash(key).String()
 
 	err := call("Node.FindSuccessor", c.Node.Address, args, reply)
 	if err != nil {
