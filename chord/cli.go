@@ -44,6 +44,8 @@ func (c *CLI) handleCommand(args string) {
 		c.clear()
 	case "help":
 		c.usage()
+	case "test":
+		c.test(param)
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 		c.usage()
@@ -76,6 +78,23 @@ func (c *CLI) findSuccessor(key string) string {
 		return "Failed to get file"
 	}
 	return fmt.Sprintf("ID: %s\nAddress: %s\nContent:\n%s\n", Hash(addr), addr, data)
+}
+
+func (c *CLI) test(key string) {
+	if key == "" {
+		fmt.Fprintf(os.Stderr, "No key supplied\n")
+		return
+	}
+	reply := new(FindSuccessorReply)
+	args := new(FindSuccessorArgs)
+	args.Key = key
+
+	err := call("Node.FindSuccessor", c.Node.Address, args, reply)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to find successor\n")
+		return
+	}
+	fmt.Fprintf(os.Stdout, "FileHash %v \nID: %v \nAdress: %v \n", Hash(key), Hash(reply.Successor.Address), reply.Successor.Address)
 }
 
 // Takes the location of a file on a local disk, then performs a lookup.

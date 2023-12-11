@@ -44,7 +44,7 @@ func main() {
 	node.FixFingersInterval = *tff
 	node.Successors = make([]chord.NodeRef, *r)
 	node.R = *r
-	node.ID = chord.Hash(*a).String()
+	node.ID = chord.Hash(*&node.Address).String()
 	node.TLSAddress = *tls
 	node.StoragePath = "storage-" + chord.Hash(*&node.Address).String()
 	err = os.Mkdir(node.StoragePath, 0755)
